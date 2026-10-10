@@ -42,8 +42,12 @@ Run out of fuel and you can **watch an ad to keep going**, once per attempt. Eve
 - **Distractors:** easy flags get same-continent choices; hard flags get look-alikes (Romania/Chad/Andorra, Ireland/Côte d'Ivoire, …).
 - **Determinism:** every stop and every day is seeded, so questions are reproducible (good for tests, replays and sharing).
 
+## Analytics
+
+Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.
+
 ## Roadmap
 
-1. Analytics events and Game Center leaderboard for the daily challenge.
+1. Game Center leaderboard for the daily challenge.
 2. Real flag artwork (SVG) instead of emoji, which also unlocks "Paint the Flag".
 3. Capitals and country-name-to-flag question types from the same data.

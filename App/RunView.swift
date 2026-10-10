@@ -16,6 +16,7 @@ struct RunView: View {
     @State private var attemptID = UUID().uuidString
     @State private var refueling = false
     @State private var refuelMessage: String?
+    @State private var tracker: RunAnalytics?
 
     init(run: Run, presented: Binding<Run?>) {
         self.initialRun = run
@@ -29,7 +30,10 @@ struct RunView: View {
             Theme.background.ignoresSafeArea()
             switch session.state {
             case .inProgress:
-                QuizView(title: run.title, session: $session)
+                QuizView(title: run.title, session: $session,
+                         onQuestionShown: { track { $0.questionShown() } },
+                         onAnswered: { result in track { $0.answered(result, session: session) } },
+                         onQuit: quit)
             case .completed(let stars):
                 ResultView(title: run.title, session: session, stars: stars, isDaily: isDaily,
                            nextStop: nextStop, retry: retry, next: playNext, close: close,
@@ -43,11 +47,38 @@ struct RunView: View {
                            refuel: watchAdToRefuel)
                     .onAppear {
                         model.play(.hint)
+                        track { $0.refuelOffered(session: session) }
                         // A daily attempt is used up once it can't be continued.
                         if !session.canRefuel { record(stars: nil) }
                     }
             }
         }
+        .onAppear { if tracker == nil { beginAttempt() } }
+    }
+
+    // MARK: Analytics
+
+    private func beginAttempt() {
+        attemptID = UUID().uuidString
+        let context: RunContext
+        switch run.kind {
+        case .stop(let stop): context = .adventure(stop: stop, session: session, attemptID: attemptID)
+        case .daily(let counts): context = .daily(counts: counts, session: session, attemptID: attemptID)
+        }
+        var started = model.analytics.makeRun(context)
+        started.start()
+        tracker = started
+    }
+
+    private func track(_ update: (inout RunAnalytics) -> Void) {
+        guard var current = tracker else { return }
+        update(&current)
+        tracker = current
+    }
+
+    private func quit() {
+        track { $0.abandoned(session: session) }
+        presented = nil
     }
 
     private var isDaily: Bool {
@@ -68,6 +99,12 @@ struct RunView: View {
 
     /// Records the result once. `stars` is nil when the run ended out of fuel.
     private func record(stars: Int?) {
+        // The tracker sends each terminal event at most once, so this is safe to call repeatedly.
+        if let stars {
+            track { $0.completed(stars: stars, session: session) }
+        } else {
+            track { $0.failed(session: session) }
+        }
         guard !recorded else { return }
         switch run.kind {
         case .stop(let stop):
@@ -76,32 +113,43 @@ struct RunView: View {
             model.finish(stop: stop, stars: stars)
         case .daily(let counts):
             recorded = true
-            if counts { model.finishDaily(score: session.score, on: run.startedAt) }
+            if counts {
+                model.finishDaily(score: session.score, on: run.startedAt)
+                tracker?.dailyCompleted(score: session.score, streak: model.progress.dailyStreak)
+            }
         }
         if let stars { model.play(stars == 3 ? .milestone : .solve) }
     }
 
     private func close() {
-        if session.state == .outOfFuel { record(stars: nil) }
+        if session.state == .outOfFuel {
+            track { $0.refuelDeclined(session: session) }
+            record(stars: nil)
+        }
         presented = nil
     }
 
     private func retry() {
-        if session.state == .outOfFuel { record(stars: nil) }
+        if session.state == .outOfFuel {
+            track { $0.refuelDeclined(session: session) }
+            record(stars: nil)
+        }
         if case .daily = run.kind { run = Run(kind: .daily(counts: false)) }
         session = run.makeSession()
         recorded = false
-        attemptID = UUID().uuidString
         refuelMessage = nil
+        beginAttempt()
     }
 
     private func watchAdToRefuel() {
         guard !refueling, session.canRefuel else { return }
         refueling = true
         refuelMessage = nil
+        track { $0.refuelAccepted(session: session) }
         Task { @MainActor in
             let outcome = await model.requestRefuel(attemptID: attemptID, refuelNumber: session.refuelsUsed + 1)
             refueling = false
+            track { $0.refuelResolved(outcome, session: session) }
             switch outcome {
             case .refueled:
                 session.refuel()
@@ -121,8 +169,8 @@ struct RunView: View {
         run = Run(kind: .stop(stop))
         session = run.makeSession()
         recorded = false
-        attemptID = UUID().uuidString
         refuelMessage = nil
+        beginAttempt()
     }
 }
 
@@ -130,6 +178,9 @@ private struct QuizView: View {
     @Environment(AppModel.self) private var model
     let title: String
     @Binding var session: QuizSession
+    let onQuestionShown: () -> Void
+    let onAnswered: (QuizSession.AnswerResult) -> Void
+    let onQuit: () -> Void
 
     @State private var displayed: Question?
     @State private var lastResult: QuizSession.AnswerResult?
@@ -160,10 +211,16 @@ private struct QuizView: View {
         }
         .padding(20)
         .animation(.spring(duration: 0.35), value: displayed)
+        .onAppear(perform: onQuestionShown)
     }
 
     private var header: some View {
         HStack {
+            Button(action: onQuit) {
+                Image(systemName: "xmark").font(.headline).foregroundStyle(.white.opacity(0.8))
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Quit")
             Text(title).font(.headline).foregroundStyle(.white)
             Spacer()
             if session.streak > 1 {
@@ -194,12 +251,14 @@ private struct QuizView: View {
         guard let result = session.answer(code) else { return }
         lastResult = result
         model.play(result.isCorrect ? .placement : .invalidMove)
+        onAnswered(result)
 
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(result.isCorrect ? 650 : 1100))
             lastResult = nil
             displayed = session.currentQuestion
             locked = false
+            if displayed != nil { onQuestionShown() }
         }
     }
 }

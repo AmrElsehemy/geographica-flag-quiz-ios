@@ -22,6 +22,7 @@ let package = Package(
             name: "FlagQuizCore",
             dependencies: [
                 .product(name: "GameTimeCore", package: "gametime-ios"),
+                .product(name: "GameTimeServices", package: "gametime-ios"),
                 .product(name: "GameTimeCommerce", package: "gametime-ios"),
                 .product(name: "GeographicaCore", package: "geographica-kit"),
                 .product(name: "GeographicaFlags", package: "geographica-kit")
@@ -32,7 +33,9 @@ let package = Package(
             dependencies: [
                 "FlagQuizCore",
                 .product(name: "GameTimeCore", package: "gametime-ios"),
-                .product(name: "GameTimeCommerce", package: "gametime-ios")
+                .product(name: "GameTimeCommerce", package: "gametime-ios"),
+                .product(name: "GameTimeServices", package: "gametime-ios"),
+                .product(name: "GameTimeTesting", package: "gametime-ios")
             ]
         )
     ]

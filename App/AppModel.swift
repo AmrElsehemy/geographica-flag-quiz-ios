@@ -1,6 +1,7 @@
 import FlagQuizCore
 import Foundation
 import GameTimeExperience
+import GameTimeServices
 import Observation
 
 @MainActor
@@ -14,13 +15,20 @@ final class AppModel {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let feedback: GameFeedbackController
     @ObservationIgnored let ads = AdService()
+    @ObservationIgnored let analytics: FlagQuizAnalytics
+    @ObservationIgnored private var appSession: SessionAnalytics
 
     private enum Keys {
         static let sound = "flagquiz.sound"
         static let haptics = "flagquiz.haptics"
     }
 
-    init(store: any ProgressStoring = UserDefaultsProgressStore(), defaults: UserDefaults = .standard) {
+    init(store: any ProgressStoring = UserDefaultsProgressStore(),
+         defaults: UserDefaults = .standard,
+         analyticsClient: any AnalyticsClient = LoggingAnalyticsClient()) {
+        let analytics = FlagQuizAnalytics(client: analyticsClient)
+        self.analytics = analytics
+        self.appSession = analytics.makeSession()
         self.store = store
         self.defaults = defaults
         self.progress = store.load()
@@ -42,6 +50,9 @@ final class AppModel {
     func play(_ event: GameFeedbackEvent) {
         feedback.play(event, soundEnabled: soundEnabled, hapticsEnabled: hapticsEnabled)
     }
+
+    func appBecameActive() { appSession.becameActive() }
+    func appWentToBackground() { appSession.wentToBackground() }
 
     func prepareAds() async { await ads.prepare() }
 
