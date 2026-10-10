@@ -46,20 +46,30 @@ import Testing
         DailyChallenge.calendar.date(from: DateComponents(year: y, month: m, day: d, hour: h, minute: min))!
     }
 
+    /// `#expect` can't contain a mutating call, so record first and return whether it counted.
+    private func record(_ p: inout AdventureProgress, _ score: Int, _ date: Date) -> Bool {
+        p.recordDaily(score: score, on: date)
+    }
+
     @Test func dailyStreakCountsConsecutiveDays() {
         var p = AdventureProgress()
-        #expect(p.recordDaily(score: 500, on: utc(2026, 10, 10)))
+        let first = record(&p, 500, utc(2026, 10, 10))
+        #expect(first)
         #expect(p.dailyStreak == 1 && p.bestDailyScore == 500)
-        #expect(p.recordDaily(score: 700, on: utc(2026, 10, 11)))
+        let second = record(&p, 700, utc(2026, 10, 11))
+        #expect(second)
         #expect(p.dailyStreak == 2 && p.bestDailyScore == 700)
-        #expect(p.recordDaily(score: 100, on: utc(2026, 10, 14)))   // gap resets
+        let afterGap = record(&p, 100, utc(2026, 10, 14))
+        #expect(afterGap)
         #expect(p.dailyStreak == 1 && p.bestDailyScore == 700)
     }
 
     @Test func onlyTheFirstAttemptOfADayCounts() {
         var p = AdventureProgress()
-        #expect(p.recordDaily(score: 400, on: utc(2026, 10, 10, 9)))
-        #expect(!p.recordDaily(score: 900, on: utc(2026, 10, 10, 20)))   // practice
+        let first = record(&p, 400, utc(2026, 10, 10, 9))
+        let practice = record(&p, 900, utc(2026, 10, 10, 20))
+        #expect(first)
+        #expect(!practice)
         #expect(p.dailyScore(on: utc(2026, 10, 10)) == 400)
         #expect(p.bestDailyScore == 400 && p.dailyStreak == 1)
         #expect(p.dailyScore(on: utc(2026, 10, 11)) == nil)
