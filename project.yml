@@ -1,0 +1,41 @@
+# Generate the Xcode project with XcodeGen:  brew install xcodegen && xcodegen generate
+name: FlagQuiz
+options:
+  bundleIdPrefix: games.knowlly.geographica
+  deploymentTarget:
+    iOS: "17.0"
+packages:
+  FlagQuiz:
+    path: .
+  GameTimeKit:
+    url: https://github.com/AmrElsehemy/gametime-ios.git
+    branch: master
+  GeographicaKit:
+    url: https://github.com/AmrElsehemy/geographica-kit.git
+    branch: master
+targets:
+  FlagQuiz:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: FlagQuiz
+        product: FlagQuizCore
+      - package: GameTimeKit
+        product: GameTimeExperience
+      - package: GeographicaKit
+        product: GeographicaCore
+      - package: GeographicaKit
+        product: GeographicaFlags
+    settings:
+      base:
+        PRODUCT_NAME: Geographica Flags
+        PRODUCT_BUNDLE_IDENTIFIER: games.knowlly.geographica.flagquiz
+        SWIFT_VERSION: "5.0"  # app UI layer; FlagQuizCore itself builds in Swift 6 mode
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_CFBundleDisplayName: "Flags Adventure"
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"

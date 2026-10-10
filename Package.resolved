@@ -1,0 +1,42 @@
+{
+  "originHash" : "789d78c734232877d2eaf8cc4ff9e46e1388f9f0c7fc0883fd35b990dc5b811a",
+  "pins" : [
+    {
+      "identity" : "gametime-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AmrElsehemy/gametime-ios.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "3b51d6b56c019b6075c311d1ad0a60f8c5d018bf"
+      }
+    },
+    {
+      "identity" : "geographica-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AmrElsehemy/geographica-kit.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "8a6dc44bf53355f7b7c9524d9459c90b542fb8ff"
+      }
+    },
+    {
+      "identity" : "swift-package-manager-google-mobile-ads",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/googleads/swift-package-manager-google-mobile-ads.git",
+      "state" : {
+        "revision" : "d1fa1f5c1dfe3b43d56c73f4de388ad3316618bc",
+        "version" : "13.11.0"
+      }
+    },
+    {
+      "identity" : "swift-package-manager-google-user-messaging-platform",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git",
+      "state" : {
+        "revision" : "13b248eaa73b7826f0efb1bcf455e251d65ecb1b",
+        "version" : "3.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}

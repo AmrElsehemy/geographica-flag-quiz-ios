@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+jobs:
+  core:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+  app:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - run: >
+          xcodebuild build -project FlagQuiz.xcodeproj -scheme FlagQuiz
+          -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
