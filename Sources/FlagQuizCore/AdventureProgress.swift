@@ -7,6 +7,8 @@ public struct AdventureProgress: Codable, Equatable, Sendable {
     public private(set) var lastDailyKey: String?
     public private(set) var dailyStreak = 0
     public private(set) var bestDailyScore = 0
+    /// Score of the counting (first) attempt on `lastDailyKey`.
+    public private(set) var lastDailyScore: Int?
 
     public init() {}
 
@@ -38,15 +40,26 @@ public struct AdventureProgress: Codable, Equatable, Sendable {
 
     public func hasPlayedDaily(on key: String) -> Bool { lastDailyKey == key }
 
-    /// Records a finished daily challenge. Playing consecutive days extends the streak; a gap resets it.
-    public mutating func recordDaily(score: Int, on date: Date, calendar: Calendar = .current) {
-        let key = DailyChallenge.dayKey(for: date, calendar: calendar)
-        guard lastDailyKey != key else { return }
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: date)
-            .map { DailyChallenge.dayKey(for: $0, calendar: calendar) }
+    /// The counting score for the UTC day containing `date`, if that day's attempt has been used.
+    public func dailyScore(on date: Date) -> Int? {
+        lastDailyKey == DailyChallenge.dayKey(for: date) ? lastDailyScore : nil
+    }
+
+    /// Records the **first** daily attempt of a UTC day: it sets that day's score and extends or
+    /// resets the streak. Later attempts the same day are practice and change nothing, so a daily
+    /// result can't be farmed by replaying a known question set.
+    /// Returns whether this attempt counted.
+    @discardableResult
+    public mutating func recordDaily(score: Int, on date: Date) -> Bool {
+        let key = DailyChallenge.dayKey(for: date)
+        guard lastDailyKey != key else { return false }
+        let yesterday = DailyChallenge.calendar.date(byAdding: .day, value: -1, to: date)
+            .map { DailyChallenge.dayKey(for: $0) }
         dailyStreak = (lastDailyKey != nil && lastDailyKey == yesterday) ? dailyStreak + 1 : 1
         lastDailyKey = key
+        lastDailyScore = score
         bestDailyScore = max(bestDailyScore, score)
+        return true
     }
 }
 

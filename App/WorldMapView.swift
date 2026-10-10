@@ -6,23 +6,26 @@ import SwiftUI
 struct Run: Identifiable {
     enum Kind {
         case stop(Stop)
-        case daily
+        /// `counts` is true for the first daily attempt of a UTC day; later ones are practice.
+        case daily(counts: Bool)
     }
 
     let id = UUID()
     let kind: Kind
+    /// Fixed at launch so a run that crosses midnight UTC still belongs to the day it started on.
+    let startedAt = Date()
 
     var title: String {
         switch kind {
         case .stop(let stop): "\(stop.continent.displayName) · Stop \(stop.number)"
-        case .daily: "Daily Challenge"
+        case .daily(let counts): counts ? "Daily Challenge" : "Daily Practice"
         }
     }
 
     func makeSession() -> QuizSession {
         switch kind {
         case .stop(let stop): Adventure.session(for: stop)
-        case .daily: DailyChallenge.session(for: Date())
+        case .daily: DailyChallenge.session(for: startedAt)
         }
     }
 }
@@ -51,7 +54,7 @@ struct WorldMapView: View {
                         Toggle("Sound", isOn: Binding(get: { model.soundEnabled }, set: { model.setSoundEnabled($0) }))
                         Toggle("Haptics", isOn: Binding(get: { model.hapticsEnabled }, set: { model.setHapticsEnabled($0) }))
                         if model.ads.privacyOptionsRequired {
-                            Button("Privacy options") { Task { await model.ads.presentPrivacyOptions() } }
+                            Button("Privacy options") { Task { @MainActor in await model.ads.presentPrivacyOptions() } }
                         }
                     } label: {
                         Image(systemName: "gearshape")
@@ -71,15 +74,15 @@ struct WorldMapView: View {
     }
 
     private var dailyCard: some View {
-        let played = model.progress.hasPlayedDaily(on: DailyChallenge.dayKey(for: Date()))
+        let todayScore = model.progress.dailyScore(on: Date())
         return Button {
-            run = Run(kind: .daily)
+            run = Run(kind: .daily(counts: todayScore == nil))
         } label: {
             HStack(spacing: 14) {
                 Text("🌍").font(.system(size: 40))
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Daily Challenge").font(.headline)
-                    Text(played ? "Done today · come back tomorrow for a new set" : "10 flags from around the world")
+                    Text(todayScore.map { "Today: \($0) pts · tap to practice" } ?? "10 flags, the same for everyone today")
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -161,6 +164,7 @@ private struct StopButton: View {
     }
 }
 
+@MainActor
 enum Theme {
     static let background = LinearGradient(
         colors: [Color(red: 0.07, green: 0.16, blue: 0.32), Color(red: 0.05, green: 0.38, blue: 0.45)],

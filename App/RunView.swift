@@ -32,14 +32,20 @@ struct RunView: View {
                 QuizView(title: run.title, session: $session)
             case .completed(let stars):
                 ResultView(title: run.title, session: session, stars: stars, isDaily: isDaily,
-                           nextStop: nextStop, retry: retry, next: playNext, close: { presented = nil })
+                           nextStop: nextStop, retry: retry, next: playNext, close: close,
+                           note: dailyNote)
                     .onAppear { record(stars: stars) }
             case .outOfFuel:
                 ResultView(title: run.title, session: session, stars: nil, isDaily: isDaily,
-                           nextStop: nil, retry: retry, next: {}, close: { presented = nil },
+                           nextStop: nil, retry: retry, next: {}, close: close,
+                           note: dailyNote,
                            canRefuel: session.canRefuel, refueling: refueling, refuelMessage: refuelMessage,
                            refuel: watchAdToRefuel)
-                    .onAppear { model.play(.hint) }
+                    .onAppear {
+                        model.play(.hint)
+                        // A daily attempt is used up once it can't be continued.
+                        if !session.canRefuel { record(stars: nil) }
+                    }
             }
         }
     }
@@ -54,17 +60,35 @@ struct RunView: View {
         return chapter.stops[stop.number]
     }
 
-    private func record(stars: Int) {
+    private var dailyNote: String? {
+        guard case .daily(let counts) = run.kind else { return nil }
+        return counts ? "Counts toward today's score and your streak."
+                      : "Practice round. Your daily score and streak aren't affected."
+    }
+
+    /// Records the result once. `stars` is nil when the run ended out of fuel.
+    private func record(stars: Int?) {
         guard !recorded else { return }
-        recorded = true
         switch run.kind {
-        case .stop(let stop): model.finish(stop: stop, stars: stars)
-        case .daily: model.finishDaily(score: session.score)
+        case .stop(let stop):
+            guard let stars else { return }   // a failed stop earns nothing
+            recorded = true
+            model.finish(stop: stop, stars: stars)
+        case .daily(let counts):
+            recorded = true
+            if counts { model.finishDaily(score: session.score, on: run.startedAt) }
         }
-        model.play(stars == 3 ? .milestone : .solve)
+        if let stars { model.play(stars == 3 ? .milestone : .solve) }
+    }
+
+    private func close() {
+        if session.state == .outOfFuel { record(stars: nil) }
+        presented = nil
     }
 
     private func retry() {
+        if session.state == .outOfFuel { record(stars: nil) }
+        if case .daily = run.kind { run = Run(kind: .daily(counts: false)) }
         session = run.makeSession()
         recorded = false
         attemptID = UUID().uuidString
@@ -75,7 +99,7 @@ struct RunView: View {
         guard !refueling, session.canRefuel else { return }
         refueling = true
         refuelMessage = nil
-        Task {
+        Task { @MainActor in
             let outcome = await model.requestRefuel(attemptID: attemptID, refuelNumber: session.refuelsUsed + 1)
             refueling = false
             switch outcome {
@@ -170,7 +194,7 @@ private struct QuizView: View {
         lastResult = result
         model.play(result.isCorrect ? .placement : .invalidMove)
 
-        Task {
+        Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(result.isCorrect ? 650 : 1100))
             lastResult = nil
             displayed = session.currentQuestion
@@ -216,6 +240,7 @@ private struct ResultView: View {
     let retry: () -> Void
     let next: () -> Void
     let close: () -> Void
+    var note: String?
     var canRefuel = false
     var refueling = false
     var refuelMessage: String?
@@ -224,7 +249,7 @@ private struct ResultView: View {
     var body: some View {
         VStack(spacing: 18) {
             Spacer()
-            Text(stars == nil ? "Out of fuel" : "Stop complete!").font(.largeTitle.bold()).foregroundStyle(.white)
+            Text(stars == nil ? "Out of fuel" : (isDaily ? "Daily complete!" : "Stop complete!")).font(.largeTitle.bold()).foregroundStyle(.white)
             Text(title).foregroundStyle(.white.opacity(0.8))
             if let stars {
                 HStack {
@@ -244,6 +269,9 @@ private struct ResultView: View {
                 Text("\(session.correctCount)/\(session.questions.count) correct · best streak \(session.bestStreak)")
                     .font(.subheadline).foregroundStyle(.white.opacity(0.8))
             }
+            if let note {
+                Text(note).font(.footnote).multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.75))
+            }
             Spacer()
             VStack(spacing: 12) {
                 if stars == nil, canRefuel {
@@ -257,7 +285,7 @@ private struct ResultView: View {
                 if stars != nil, let nextStop, !isDaily {
                     primary("Next: Stop \(nextStop.number)", action: next)
                 }
-                if !isDaily { secondary(stars == nil ? "Try again" : "Play again", action: retry) }
+                secondary(isDaily ? "Practice again" : (stars == nil ? "Try again" : "Play again"), action: retry)
                 secondary("Back to map", action: close)
             }
         }

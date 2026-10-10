@@ -42,30 +42,47 @@ import Testing
         #expect(p.isStopUnlocked(northAmerica.stops[0]))
     }
 
-    @Test func dailyStreakCountsConsecutiveDays() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
-        let day1 = Date(timeIntervalSince1970: 1_700_000_000)
-        let day2 = day1.addingTimeInterval(86_400)
-        let day4 = day1.addingTimeInterval(3 * 86_400)
-
-        var p = AdventureProgress()
-        p.recordDaily(score: 500, on: day1, calendar: calendar)
-        p.recordDaily(score: 900, on: day1, calendar: calendar)   // same day: ignored
-        #expect(p.dailyStreak == 1 && p.bestDailyScore == 500)
-        p.recordDaily(score: 700, on: day2, calendar: calendar)
-        #expect(p.dailyStreak == 2 && p.bestDailyScore == 700)
-        p.recordDaily(score: 100, on: day4, calendar: calendar)   // gap resets
-        #expect(p.dailyStreak == 1)
+    private func utc(_ y: Int, _ m: Int, _ d: Int, _ h: Int = 12, _ min: Int = 0) -> Date {
+        DailyChallenge.calendar.date(from: DateComponents(year: y, month: m, day: d, hour: h, minute: min))!
     }
 
-    @Test func dailySessionIsSharedPerDayAndDiffersAcrossDays() throws {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
-        let day = Date(timeIntervalSince1970: 1_700_000_000)
-        let a = DailyChallenge.session(for: day, calendar: calendar)
-        let b = DailyChallenge.session(for: day, calendar: calendar)
-        let next = DailyChallenge.session(for: day.addingTimeInterval(86_400), calendar: calendar)
+    @Test func dailyStreakCountsConsecutiveDays() {
+        var p = AdventureProgress()
+        #expect(p.recordDaily(score: 500, on: utc(2026, 10, 10)))
+        #expect(p.dailyStreak == 1 && p.bestDailyScore == 500)
+        #expect(p.recordDaily(score: 700, on: utc(2026, 10, 11)))
+        #expect(p.dailyStreak == 2 && p.bestDailyScore == 700)
+        #expect(p.recordDaily(score: 100, on: utc(2026, 10, 14)))   // gap resets
+        #expect(p.dailyStreak == 1 && p.bestDailyScore == 700)
+    }
+
+    @Test func onlyTheFirstAttemptOfADayCounts() {
+        var p = AdventureProgress()
+        #expect(p.recordDaily(score: 400, on: utc(2026, 10, 10, 9)))
+        #expect(!p.recordDaily(score: 900, on: utc(2026, 10, 10, 20)))   // practice
+        #expect(p.dailyScore(on: utc(2026, 10, 10)) == 400)
+        #expect(p.bestDailyScore == 400 && p.dailyStreak == 1)
+        #expect(p.dailyScore(on: utc(2026, 10, 11)) == nil)
+    }
+
+    @Test func dailyDayIsTheUTCDayNotTheDevicesLocalDay() {
+        // 23:30 UTC on the 10th is already the 11th in Tokyo and still the 10th in New York.
+        let instant = utc(2026, 10, 10, 23, 30)
+        #expect(DailyChallenge.dayKey(for: instant) == "2026-10-10")
+        #expect(DailyChallenge.dayKey(for: utc(2026, 10, 11, 0, 5)) == "2026-10-11")
+
+        var tokyo = Calendar(identifier: .gregorian); tokyo.timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        var newYork = Calendar(identifier: .gregorian); newYork.timeZone = TimeZone(identifier: "America/New_York")!
+        #expect(tokyo.component(.day, from: instant) == 11)      // proves local days really differ
+        #expect(newYork.component(.day, from: instant) == 10)
+        // ...yet everyone gets the same challenge for that instant.
+        #expect(DailyChallenge.session(for: instant).questions == DailyChallenge.session(for: utc(2026, 10, 10, 1)).questions)
+    }
+
+    @Test func dailySessionIsSharedPerDayAndDiffersAcrossDays() {
+        let a = DailyChallenge.session(for: utc(2026, 10, 10))
+        let b = DailyChallenge.session(for: utc(2026, 10, 10, 3))
+        let next = DailyChallenge.session(for: utc(2026, 10, 11))
         #expect(a.questions == b.questions)
         #expect(a.questions != next.questions)
         #expect(a.questions.count == DailyChallenge.questionCount)

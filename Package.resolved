@@ -1,5 +1,5 @@
 {
-  "originHash" : "789d78c734232877d2eaf8cc4ff9e46e1388f9f0c7fc0883fd35b990dc5b811a",
+  "originHash" : "66fd86c03b300b2902b0a7c0648df8c766d0308808c8d600e513a2b8d30b1271",
   "pins" : [
     {
       "identity" : "gametime-ios",
@@ -16,7 +16,7 @@
       "location" : "https://github.com/AmrElsehemy/geographica-kit.git",
       "state" : {
         "branch" : "master",
-        "revision" : "8a6dc44bf53355f7b7c9524d9459c90b542fb8ff"
+        "revision" : "d5c46adf9fc5abcff20f3893d0bd694b54888ecc"
       }
     },
     {
