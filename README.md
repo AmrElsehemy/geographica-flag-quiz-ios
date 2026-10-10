@@ -49,5 +49,5 @@ Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels,
 ## Roadmap
 
 1. Game Center leaderboard for the daily challenge.
-2. Real flag artwork (SVG) instead of emoji, which also unlocks "Paint the Flag".
-3. Capitals and country-name-to-flag question types from the same data.
+2. Onboarding / tutorial pass, app icon and screenshots, real AdMob ids, TestFlight.
+3. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.
