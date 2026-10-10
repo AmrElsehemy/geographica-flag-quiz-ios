@@ -64,6 +64,11 @@ public enum FlagQuizEvent {
     public static let rewardCompleted = "reward_completed"
     public static let rewardFailed = "reward_failed"
     public static let dailyCompleted = "daily_completed"
+    public static let tutorialStarted = "tutorial_started"
+    public static let tutorialStep = "tutorial_step"
+    public static let tutorialCompleted = "tutorial_completed"
+    public static let tutorialSkipped = "tutorial_skipped"
+    public static let hintSeen = "hint_seen"
 }
 
 /// Builds and sends events. Holds no player identity: events carry only gameplay facts and an
@@ -90,6 +95,15 @@ public struct FlagQuizAnalytics: Sendable {
         RunAnalytics(context: context, analytics: self)
     }
 
+    public func makeTutorial(replay: Bool) -> TutorialAnalytics {
+        TutorialAnalytics(analytics: self, replay: replay)
+    }
+
+    /// A one-time hint was shown and dismissed or acted on.
+    public func hintSeen(_ hint: Hint) {
+        send(FlagQuizEvent.hintSeen, ["hint": hint.rawValue])
+    }
+
     public func makeSession() -> SessionAnalytics {
         SessionAnalytics(analytics: self)
     }
@@ -113,6 +127,51 @@ public struct SessionAnalytics: Sendable {
         guard let startedAt else { return }
         self.startedAt = nil
         analytics.send(FlagQuizEvent.sessionEnd, ["duration_s": seconds(analytics.now.timeIntervalSince(startedAt))])
+    }
+}
+
+/// Tracks the tutorial funnel: `tutorial_started`, a `tutorial_step` per answer, then exactly one of
+/// `tutorial_completed` or `tutorial_skipped`. Kept apart from `level_*` so practice answers never
+/// pollute gameplay metrics.
+public struct TutorialAnalytics: Sendable {
+    private let analytics: FlagQuizAnalytics
+    private let replay: Bool
+    private var startedAt: Date
+    private var finished = false
+
+    init(analytics: FlagQuizAnalytics, replay: Bool) {
+        self.analytics = analytics
+        self.replay = replay
+        self.startedAt = analytics.now
+    }
+
+    private func send(_ name: String, _ extra: [String: String] = [:]) {
+        analytics.send(name, ["replay": replay ? "true" : "false"].merging(extra) { _, new in new })
+    }
+
+    public mutating func start() {
+        startedAt = analytics.now
+        send(FlagQuizEvent.tutorialStarted)
+    }
+
+    public func step(index: Int, correct: Bool) {
+        send(FlagQuizEvent.tutorialStep, ["step": String(index), "correct": correct ? "true" : "false"])
+    }
+
+    public mutating func completed(session: QuizSession) {
+        guard !finished else { return }
+        finished = true
+        send(FlagQuizEvent.tutorialCompleted, [
+            "mistakes": String(session.mistakes),
+            "duration_s": seconds(analytics.now.timeIntervalSince(startedAt))
+        ])
+    }
+
+    /// `atStep` is how many questions were answered before the player skipped.
+    public mutating func skipped(atStep: Int) {
+        guard !finished else { return }
+        finished = true
+        send(FlagQuizEvent.tutorialSkipped, ["step": String(atStep)])
     }
 }
 

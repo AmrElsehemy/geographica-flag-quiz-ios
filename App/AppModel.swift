@@ -8,10 +8,12 @@ import Observation
 @Observable
 final class AppModel {
     private(set) var progress: AdventureProgress
+    private(set) var onboarding: OnboardingProgress
     private(set) var soundEnabled: Bool
     private(set) var hapticsEnabled: Bool
 
     @ObservationIgnored private let store: any ProgressStoring
+    @ObservationIgnored private let onboardingStore: any OnboardingStoring
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let feedback: GameFeedbackController
     @ObservationIgnored let ads = AdService()
@@ -24,12 +26,15 @@ final class AppModel {
     }
 
     init(store: any ProgressStoring = UserDefaultsProgressStore(),
+         onboardingStore: any OnboardingStoring = UserDefaultsOnboardingStore(),
          defaults: UserDefaults = .standard,
          analyticsClient: any AnalyticsClient = LoggingAnalyticsClient()) {
         let analytics = FlagQuizAnalytics(client: analyticsClient)
         self.analytics = analytics
         self.appSession = analytics.makeSession()
         self.store = store
+        self.onboardingStore = onboardingStore
+        self.onboarding = onboardingStore.load()
         self.defaults = defaults
         self.progress = store.load()
         self.soundEnabled = defaults.object(forKey: Keys.sound) as? Bool ?? true
@@ -53,6 +58,24 @@ final class AppModel {
 
     func appBecameActive() { appSession.becameActive() }
     func appWentToBackground() { appSession.wentToBackground() }
+
+    func completeTutorial() {
+        onboarding.completeTutorial()
+        onboardingStore.save(onboarding)
+    }
+
+    func skipTutorial() {
+        onboarding.skipTutorial()
+        onboardingStore.save(onboarding)
+    }
+
+    /// Marks a one-time hint as seen (and reports it once).
+    func markHintSeen(_ hint: Hint) {
+        guard !onboarding.hasSeen(hint) else { return }
+        onboarding.markSeen(hint)
+        onboardingStore.save(onboarding)
+        analytics.hintSeen(hint)
+    }
 
     func prepareAds() async { await ads.prepare() }
 

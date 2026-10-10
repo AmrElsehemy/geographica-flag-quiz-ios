@@ -42,6 +42,10 @@ Run out of fuel and you can **watch an ad to keep going**, once per attempt. Eve
 - **Distractors:** easy flags get same-continent choices; hard flags get look-alikes (Romania/Chad/Andorra, Ireland/Côte d'Ivoire, …).
 - **Determinism:** every stop and every day is seeded, so questions are reproducible (good for tests, replays and sharing).
 
+## Onboarding
+
+Teach-through-play: first launch drops straight into a three-flag guided practice round (skippable, replayable from settings, wrong answers free), then one-time hints appear in context. See [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
+
 ## Analytics
 
 Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.
@@ -49,5 +53,5 @@ Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels,
 ## Roadmap
 
 1. Game Center leaderboard for the daily challenge.
-2. Onboarding / tutorial pass, app icon and screenshots, real AdMob ids, TestFlight.
+2. App icon and screenshots, real AdMob ids, TestFlight.
 3. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.

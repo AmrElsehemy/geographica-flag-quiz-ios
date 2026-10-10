@@ -22,11 +22,18 @@ passing another `AnalyticsClient` to `AppModel`; nothing else changes.
 | `level_completed` | Stop or daily finished | run*, summary†, `stars` |
 | `level_failed` | Ran out of fuel for good | run*, summary†, `reason=out_of_fuel` |
 | `level_abandoned` | Player quit mid-run | run*, summary†, `progress` (questions answered) |
+| `tutorial_started` | Tutorial opens (first launch or replay from settings) | `replay` |
+| `tutorial_step` | Each tutorial answer | `replay`, `step` (0-based), `correct` |
+| `tutorial_completed` | All three flags answered | `replay`, `mistakes`, `duration_s` |
+| `tutorial_skipped` | Player taps Skip | `replay`, `step` (questions answered so far) |
+| `hint_seen` | A one-time hint is dismissed or acted on | `hint` (`mapStart`, `stars`, `daily`) |
 | `daily_completed` | First (counting) daily attempt recorded | `score`, `streak` |
 
 \* run properties: `mode` (`adventure`, `daily`, `daily_practice`), `level_id`, `attempt_id`, `questions`, and for
 adventure `chapter`, `stop_number`.
 † summary: `score`, `correct`, `mistakes`, `best_streak`, `refuels`, `duration_s`.
+
+Tutorial answers never produce `level_*` or `question_answered` events, so practice answers can't pollute gameplay metrics. Each tutorial run sends exactly one of `tutorial_completed` or `tutorial_skipped`.
 
 Each attempt sends `level_started` and then **exactly one** of `level_completed`, `level_failed` or
 `level_abandoned`. A retry is a new attempt (new `attempt_id`).

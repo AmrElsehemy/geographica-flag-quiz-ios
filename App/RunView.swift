@@ -17,6 +17,7 @@ struct RunView: View {
     @State private var refueling = false
     @State private var refuelMessage: String?
     @State private var tracker: RunAnalytics?
+    @State private var starsHintShown = false
 
     init(run: Run, presented: Binding<Run?>) {
         self.initialRun = run
@@ -37,7 +38,7 @@ struct RunView: View {
             case .completed(let stars):
                 ResultView(title: run.title, session: session, stars: stars, isDaily: isDaily,
                            nextStop: nextStop, retry: retry, next: playNext, close: close,
-                           note: dailyNote)
+                           note: dailyNote ?? (starsHintShown ? Hint.stars.message : nil))
                     .onAppear { record(stars: stars) }
             case .outOfFuel:
                 ResultView(title: run.title, session: session, stars: nil, isDaily: isDaily,
@@ -64,7 +65,9 @@ struct RunView: View {
         switch run.kind {
         case .stop(let stop): context = .adventure(stop: stop, session: session, attemptID: attemptID)
         case .daily(let counts): context = .daily(counts: counts, session: session, attemptID: attemptID)
+        case .tutorial: return   // the tutorial has its own view and funnel
         }
+        starsHintShown = false
         var started = model.analytics.makeRun(context)
         started.start()
         tracker = started
@@ -111,12 +114,18 @@ struct RunView: View {
             guard let stars else { return }   // a failed stop earns nothing
             recorded = true
             model.finish(stop: stop, stars: stars)
+            if !model.onboarding.hasSeen(.stars) {
+                starsHintShown = true
+                model.markHintSeen(.stars)
+            }
         case .daily(let counts):
             recorded = true
             if counts {
                 model.finishDaily(score: session.score, on: run.startedAt)
                 tracker?.dailyCompleted(score: session.score, streak: model.progress.dailyStreak)
             }
+        case .tutorial:
+            return
         }
         if let stars { model.play(stars == 3 ? .milestone : .solve) }
     }
@@ -181,6 +190,10 @@ private struct QuizView: View {
     let onQuestionShown: () -> Void
     let onAnswered: (QuizSession.AnswerResult) -> Void
     let onQuit: () -> Void
+    /// Optional coaching line per question index (used by the tutorial).
+    var coachLines: [String] = []
+    /// Shows a text button (e.g. "Skip") instead of the close icon.
+    var quitTitle: String?
 
     @State private var displayed: Question?
     @State private var lastResult: QuizSession.AnswerResult?
@@ -190,6 +203,17 @@ private struct QuizView: View {
         VStack(spacing: 20) {
             header
             ProgressView(value: session.progress).tint(Theme.star)
+            if let coach {
+                Text(coach)
+                    .font(.callout.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 14))
+                    .id(coach)
+                    .transition(.opacity)
+            }
             Spacer(minLength: 0)
             if let question = displayed ?? session.currentQuestion {
                 FlagView(iso2: question.answer, accessibilityLabel: "A national flag")
@@ -214,13 +238,26 @@ private struct QuizView: View {
         .onAppear(perform: onQuestionShown)
     }
 
+    /// The coaching line for the question currently on screen.
+    private var coach: String? {
+        guard let question = displayed ?? session.currentQuestion,
+              let index = session.questions.firstIndex(of: question),
+              coachLines.indices.contains(index) else { return nil }
+        return coachLines[index]
+    }
+
     private var header: some View {
         HStack {
             Button(action: onQuit) {
-                Image(systemName: "xmark").font(.headline).foregroundStyle(.white.opacity(0.8))
-                    .frame(width: 44, height: 44)
+                if let quitTitle {
+                    Text(quitTitle).font(.subheadline.weight(.semibold)).foregroundStyle(.white.opacity(0.85))
+                        .frame(minWidth: 44, minHeight: 44)
+                } else {
+                    Image(systemName: "xmark").font(.headline).foregroundStyle(.white.opacity(0.8))
+                        .frame(width: 44, height: 44)
+                }
             }
-            .accessibilityLabel("Quit")
+            .accessibilityLabel(quitTitle ?? "Quit")
             Text(title).font(.headline).foregroundStyle(.white)
             Spacer()
             if session.streak > 1 {
@@ -364,5 +401,76 @@ private struct ResultView: View {
             Text(text).font(.title3.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 52)
                 .foregroundStyle(.white).background(Color.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 16))
         }
+    }
+}
+
+/// The first-run practice round: three guided flags, wrong answers are free, and it can be skipped.
+struct TutorialView: View {
+    @Environment(AppModel.self) private var model
+    let replay: Bool
+    @Binding var presented: Run?
+
+    @State private var session = Tutorial.session()
+    @State private var tracker: TutorialAnalytics?
+
+    var body: some View {
+        ZStack {
+            Theme.background.ignoresSafeArea()
+            if case .completed = session.state {
+                completion
+            } else {
+                QuizView(title: "How to play", session: $session,
+                         onQuestionShown: {},
+                         onAnswered: { result in track { $0.step(index: session.currentIndex - 1, correct: result.isCorrect) } },
+                         onQuit: skip,
+                         coachLines: Tutorial.steps.map(\.coach),
+                         quitTitle: "Skip")
+            }
+        }
+        .onAppear {
+            guard tracker == nil else { return }
+            var started = model.analytics.makeTutorial(replay: replay)
+            started.start()
+            tracker = started
+        }
+    }
+
+    private var completion: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            Text("You're ready!").font(.largeTitle.bold()).foregroundStyle(.white)
+            Text("Travel the world one continent at a time. Earn stars to unlock new stops, and watch your fuel.")
+                .multilineTextAlignment(.center).foregroundStyle(.white.opacity(0.9))
+            Spacer()
+            Button(action: finish) {
+                Text(replay ? "Back to the map" : "Start adventure").font(.title3.bold())
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .foregroundStyle(.black).background(Theme.star, in: RoundedRectangle(cornerRadius: 16))
+            }
+        }
+        .padding(24)
+        .onAppear {
+            track { $0.completed(session: session) }
+            model.play(.solve)
+        }
+    }
+
+    private func track(_ update: (inout TutorialAnalytics) -> Void) {
+        guard var current = tracker else { return }
+        update(&current)
+        tracker = current
+    }
+
+    private func skip() {
+        track { $0.skipped(atStep: session.currentIndex) }
+        if !replay { model.skipTutorial() }
+        presented = nil
+    }
+
+    /// Completion is recorded on the button, not when the screen appears, so the ad-consent form
+    /// (which waits for the tutorial to be done) can't pop up over "You're ready!".
+    private func finish() {
+        model.completeTutorial()
+        presented = nil
     }
 }

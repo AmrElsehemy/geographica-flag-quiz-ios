@@ -8,6 +8,8 @@ struct Run: Identifiable {
         case stop(Stop)
         /// `counts` is true for the first daily attempt of a UTC day; later ones are practice.
         case daily(counts: Bool)
+        /// The first-run practice round. `replay` is true when opened from the settings menu.
+        case tutorial(replay: Bool)
     }
 
     let id = UUID()
@@ -19,6 +21,7 @@ struct Run: Identifiable {
         switch kind {
         case .stop(let stop): "\(stop.continent.displayName) · Stop \(stop.number)"
         case .daily(let counts): counts ? "Daily Challenge" : "Daily Practice"
+        case .tutorial: "How to play"
         }
     }
 
@@ -26,6 +29,7 @@ struct Run: Identifiable {
         switch kind {
         case .stop(let stop): Adventure.session(for: stop)
         case .daily: DailyChallenge.session(for: startedAt)
+        case .tutorial: Tutorial.session()
         }
     }
 }
@@ -38,6 +42,9 @@ struct WorldMapView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    if let hint = model.onboarding.mapHint(progress: model.progress) {
+                        HintCard(hint: hint) { model.markHintSeen(hint) }
+                    }
                     dailyCard
                     ForEach(Adventure.chapters) { chapter in
                         ChapterCard(chapter: chapter, run: $run)
@@ -46,11 +53,18 @@ struct WorldMapView: View {
                 .padding(16)
             }
             .background(Theme.background.ignoresSafeArea())
-            .task { await model.prepareAds() }
+            // First launch goes straight into the tutorial, so hold the ad-consent form until it's done.
+            .task(id: model.onboarding.shouldShowTutorial) {
+                if !model.onboarding.shouldShowTutorial { await model.prepareAds() }
+            }
+            .onAppear {
+                if model.onboarding.shouldShowTutorial, run == nil { run = Run(kind: .tutorial(replay: false)) }
+            }
             .navigationTitle("Flags Adventure")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
+                        Button("How to play") { run = Run(kind: .tutorial(replay: true)) }
                         Toggle("Sound", isOn: Binding(get: { model.soundEnabled }, set: { model.setSoundEnabled($0) }))
                         Toggle("Haptics", isOn: Binding(get: { model.hapticsEnabled }, set: { model.setHapticsEnabled($0) }))
                         if model.ads.privacyOptionsRequired {
@@ -69,13 +83,18 @@ struct WorldMapView: View {
             }
         }
         .fullScreenCover(item: $run) { current in
-            RunView(run: current, presented: $run)
+            if case .tutorial(let replay) = current.kind {
+                TutorialView(replay: replay, presented: $run)
+            } else {
+                RunView(run: current, presented: $run)
+            }
         }
     }
 
     private var dailyCard: some View {
         let todayScore = model.progress.dailyScore(on: Date())
         return Button {
+            model.markHintSeen(.daily)
             run = Run(kind: .daily(counts: todayScore == nil))
         } label: {
             HStack(spacing: 14) {
@@ -142,6 +161,7 @@ private struct StopButton: View {
         let unlocked = model.progress.isStopUnlocked(stop)
         let stars = model.progress.stars(for: stop)
         Button {
+            model.markHintSeen(.mapStart)
             run = Run(kind: .stop(stop))
         } label: {
             VStack(spacing: 2) {
@@ -175,4 +195,43 @@ enum Theme {
     static let star = Color(red: 1.0, green: 0.78, blue: 0.1)
     static let good = Color(red: 0.2, green: 0.75, blue: 0.4)
     static let bad = Color(red: 0.9, green: 0.3, blue: 0.3)
+}
+
+extension Hint {
+    var title: String {
+        switch self {
+        case .mapStart: "Your adventure starts here"
+        case .stars: "How stars work"
+        case .daily: "New: Daily Challenge"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .mapStart: "Tap stop 1 to begin. Earn stars to open new stops and continents."
+        case .stars: "★★★ means no mistakes, ★★ one, ★ two. One star opens the next stop."
+        case .daily: "Ten flags, the same for everyone today. Play every day to build a streak."
+        }
+    }
+}
+
+private struct HintCard: View {
+    let hint: Hint
+    let dismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "lightbulb.fill").foregroundStyle(Theme.star)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(hint.title).font(.headline)
+                Text(hint.message).font(.subheadline).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            Button("Got it", action: dismiss).font(.subheadline.weight(.semibold))
+        }
+        .padding(16)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Theme.star.opacity(0.6), lineWidth: 1.5))
+        .accessibilityElement(children: .combine)
+    }
 }
