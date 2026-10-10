@@ -24,7 +24,7 @@ xcodegen generate              # creates FlagQuiz.xcodeproj from project.yml
 open FlagQuiz.xcodeproj        # run on an iPhone 17 simulator or device
 ```
 
-Set your signing team in Xcode before running on a device. The bundle id (`games.knowlly.geographica.flagquiz`) is a placeholder.
+Set your signing team in Xcode before running on a device.
 
 ## Game design
 

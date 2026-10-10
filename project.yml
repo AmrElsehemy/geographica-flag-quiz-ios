@@ -1,7 +1,7 @@
 # Generate the Xcode project with XcodeGen:  brew install xcodegen && xcodegen generate
 name: FlagQuiz
 options:
-  bundleIdPrefix: games.knowlly.geographica
+  bundleIdPrefix: ai.knowlly
   deploymentTarget:
     iOS: "17.0"
 packages:
@@ -30,7 +30,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Geographica Flags
-        PRODUCT_BUNDLE_IDENTIFIER: games.knowlly.geographica.flagquiz
+        PRODUCT_BUNDLE_IDENTIFIER: ai.knowlly.flagquiz
         SWIFT_VERSION: "5.0"  # app UI layer; FlagQuizCore itself builds in Swift 6 mode
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: YES
