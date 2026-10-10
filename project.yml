@@ -48,5 +48,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ai.knowlly.flagquiz
         SWIFT_VERSION: "6.0"
         TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#1B4D9B"/>
+      <stop offset="1" stop-color="#0A6E78"/>
+    </linearGradient>
+    <radialGradient id="globe" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#52C4E6"/>
+      <stop offset="1" stop-color="#1A7FB0"/>
+    </radialGradient>
+    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFD43B"/>
+      <stop offset="1" stop-color="#FFB100"/>
+    </linearGradient>
+    <clipPath id="ball"><circle cx="512" cy="590" r="330"/></clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#sky)"/>
+  <!-- globe -->
+  <circle cx="512" cy="590" r="330" fill="url(#globe)"/>
+  <g clip-path="url(#ball)" fill="none" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="14">
+    <ellipse cx="512" cy="590" rx="150" ry="330"/>
+    <ellipse cx="512" cy="590" rx="330" ry="150"/>
+    <line x1="512" y1="260" x2="512" y2="920"/>
+    <line x1="182" y1="590" x2="842" y2="590"/>
+  </g>
+  <circle cx="512" cy="590" r="330" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="10"/>
+  <!-- pole + pennant planted on the globe -->
+  <rect x="496" y="150" width="32" height="470" rx="16" fill="#FFFFFF"/>
+  <circle cx="512" cy="150" r="30" fill="#FFFFFF"/>
+  <path d="M528 190 L842 290 L528 392 Z" fill="url(#flag)"/>
+  <path d="M528 190 L842 290 L528 242 Z" fill="#FFFFFF" fill-opacity="0.28"/>
+</svg>
