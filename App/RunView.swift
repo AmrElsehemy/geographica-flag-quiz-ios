@@ -13,6 +13,9 @@ struct RunView: View {
     @State private var run: Run
     @State private var session: QuizSession
     @State private var recorded = false
+    @State private var attemptID = UUID().uuidString
+    @State private var refueling = false
+    @State private var refuelMessage: String?
 
     init(run: Run, presented: Binding<Run?>) {
         self.initialRun = run
@@ -33,7 +36,9 @@ struct RunView: View {
                     .onAppear { record(stars: stars) }
             case .outOfFuel:
                 ResultView(title: run.title, session: session, stars: nil, isDaily: isDaily,
-                           nextStop: nil, retry: retry, next: {}, close: { presented = nil })
+                           nextStop: nil, retry: retry, next: {}, close: { presented = nil },
+                           canRefuel: session.canRefuel, refueling: refueling, refuelMessage: refuelMessage,
+                           refuel: watchAdToRefuel)
                     .onAppear { model.play(.hint) }
             }
         }
@@ -62,6 +67,29 @@ struct RunView: View {
     private func retry() {
         session = run.makeSession()
         recorded = false
+        attemptID = UUID().uuidString
+        refuelMessage = nil
+    }
+
+    private func watchAdToRefuel() {
+        guard !refueling, session.canRefuel else { return }
+        refueling = true
+        refuelMessage = nil
+        Task {
+            let outcome = await model.requestRefuel(attemptID: attemptID, refuelNumber: session.refuelsUsed + 1)
+            refueling = false
+            switch outcome {
+            case .refueled:
+                session.refuel()
+                model.play(.hint)
+            case .cancelled:
+                refuelMessage = "Watch the whole ad to earn the extra fuel."
+            case .unavailable:
+                refuelMessage = "No ad is ready right now. Try again in a moment."
+            case .ineligible:
+                refuelMessage = "Ads aren't available right now. You can try again instead."
+            }
+        }
     }
 
     private func playNext() {
@@ -69,6 +97,8 @@ struct RunView: View {
         run = Run(kind: .stop(stop))
         session = run.makeSession()
         recorded = false
+        attemptID = UUID().uuidString
+        refuelMessage = nil
     }
 }
 
@@ -186,6 +216,10 @@ private struct ResultView: View {
     let retry: () -> Void
     let next: () -> Void
     let close: () -> Void
+    var canRefuel = false
+    var refueling = false
+    var refuelMessage: String?
+    var refuel: () -> Void = {}
 
     var body: some View {
         VStack(spacing: 18) {
@@ -212,6 +246,14 @@ private struct ResultView: View {
             }
             Spacer()
             VStack(spacing: 12) {
+                if stars == nil, canRefuel {
+                    primary(refueling ? "Loading ad…" : "Watch an ad to keep going", action: refuel)
+                        .disabled(refueling)
+                }
+                if let refuelMessage {
+                    Text(refuelMessage).font(.footnote).multilineTextAlignment(.center)
+                        .foregroundStyle(.white.opacity(0.85))
+                }
                 if stars != nil, let nextStop, !isDaily {
                     primary("Next: Stop \(nextStop.number)", action: next)
                 }

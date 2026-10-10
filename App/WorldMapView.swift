@@ -43,12 +43,16 @@ struct WorldMapView: View {
                 .padding(16)
             }
             .background(Theme.background.ignoresSafeArea())
+            .task { await model.prepareAds() }
             .navigationTitle("Flags Adventure")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Toggle("Sound", isOn: Binding(get: { model.soundEnabled }, set: { model.setSoundEnabled($0) }))
                         Toggle("Haptics", isOn: Binding(get: { model.hapticsEnabled }, set: { model.setHapticsEnabled($0) }))
+                        if model.ads.privacyOptionsRequired {
+                            Button("Privacy options") { Task { await model.ads.presentPrivacyOptions() } }
+                        }
                     } label: {
                         Image(systemName: "gearshape")
                     }

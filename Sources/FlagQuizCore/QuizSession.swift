@@ -22,6 +22,8 @@ public struct QuizSession: Sendable {
     public static let pointsPerCorrect = 100
     public static let streakBonus = 10
     public static let maxStreakBonusSteps = 5
+    /// A player may continue once per attempt after running dry; beyond that they retry.
+    public static let maxRefuels = 1
 
     public let id: String
     public let questions: [Question]
@@ -33,6 +35,7 @@ public struct QuizSession: Sendable {
     public private(set) var correctCount = 0
     public private(set) var score = 0
     public private(set) var state: State = .inProgress
+    public private(set) var refuelsUsed = 0
 
     public init(id: String, questions: [Question], fuel: Int = QuizSession.startingFuel) {
         self.id = id
@@ -79,9 +82,12 @@ public struct QuizSession: Sendable {
                             pointsAwarded: points, streak: streak, state: state)
     }
 
-    /// Continues after running dry (e.g. after a rewarded ad). Grants one fuel.
+    public var canRefuel: Bool { state == .outOfFuel && refuelsUsed < Self.maxRefuels }
+
+    /// Continues after running dry (e.g. after a rewarded ad). Grants one fuel, once per attempt.
     public mutating func refuel() {
-        guard state == .outOfFuel else { return }
+        guard canRefuel else { return }
+        refuelsUsed += 1
         fuel = 1
         state = currentIndex >= questions.count
             ? .completed(stars: Self.stars(forMistakes: mistakes))

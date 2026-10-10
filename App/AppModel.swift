@@ -13,6 +13,7 @@ final class AppModel {
     @ObservationIgnored private let store: any ProgressStoring
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let feedback: GameFeedbackController
+    @ObservationIgnored let ads = AdService()
 
     private enum Keys {
         static let sound = "flagquiz.sound"
@@ -40,6 +41,13 @@ final class AppModel {
 
     func play(_ event: GameFeedbackEvent) {
         feedback.play(event, soundEnabled: soundEnabled, hapticsEnabled: hapticsEnabled)
+    }
+
+    func prepareAds() async { await ads.prepare() }
+
+    func requestRefuel(attemptID: String, refuelNumber: Int) async -> RefuelOutcome {
+        await ads.requestRefuel(attemptID: attemptID, refuelNumber: refuelNumber,
+                                completedStops: progress.starsByStop.count)
     }
 
     func finish(stop: Stop, stars: Int) {

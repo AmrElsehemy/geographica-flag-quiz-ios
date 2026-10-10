@@ -19,12 +19,20 @@ Game rules live in `FlagQuizCore` and know nothing about UI, so they're testable
 
 ```bash
 swift test                     # game logic (works on macOS or Linux)
-brew install xcodegen
+brew install xcodegen          # one-time
 xcodegen generate              # creates FlagQuiz.xcodeproj from project.yml
 open FlagQuiz.xcodeproj        # run on an iPhone 17 simulator or device
 ```
 
 Set your signing team in Xcode before running on a device.
+
+## Rewarded refuel
+
+Run out of fuel and you can **watch an ad to keep going**, once per attempt. Everything policy-related comes from GameTimeKit (`MonetizationCoordinator`: consent, cooldown, exactly-once rewards; `GameTimeAdMob`: Google ads and the UMP consent form). This repo only decides the offer (`Refuel.swift`) and the UI.
+
+- **Debug builds** use Google's sample ad units and sample app id, so they are always safe to tap.
+- **Release builds** need real ids before shipping: replace `GADApplicationIdentifier` and set `FLAGQUIZ_REWARDED_UNIT_ID` in `project.yml`. With no unit id set, Release builds show no ads rather than a sample ad.
+- Rewarded ads are never forced: the button only appears after running dry, and a missing or cancelled ad costs nothing.
 
 ## Game design
 
@@ -36,7 +44,6 @@ Set your signing team in Xcode before running on a device.
 
 ## Roadmap
 
-1. Rewarded "refuel" continue via GameTimeKit's monetisation coordinator (`QuizSession.refuel()` is already in place).
-2. Analytics events and Game Center leaderboard for the daily challenge.
-3. Real flag artwork (SVG) instead of emoji, which also unlocks "Paint the Flag".
-4. Capitals and country-name-to-flag question types from the same data.
+1. Analytics events and Game Center leaderboard for the daily challenge.
+2. Real flag artwork (SVG) instead of emoji, which also unlocks "Paint the Flag".
+3. Capitals and country-name-to-flag question types from the same data.
