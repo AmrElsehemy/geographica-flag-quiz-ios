@@ -141,9 +141,10 @@ private struct QuizView: View {
             ProgressView(value: session.progress).tint(Theme.star)
             Spacer(minLength: 0)
             if let question = displayed ?? session.currentQuestion {
-                Text(FlagCatalog.emoji(iso2: question.answer))
-                    .font(.system(size: 130))
-                    .accessibilityLabel("A national flag")
+                FlagView(iso2: question.answer, accessibilityLabel: "A national flag")
+                    .frame(maxWidth: 300, maxHeight: 210)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: .black.opacity(0.35), radius: 10, y: 5)
                     .id(question.id)
                     .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
                 Text("Which country is this?").font(.title3).foregroundStyle(.white.opacity(0.85))
