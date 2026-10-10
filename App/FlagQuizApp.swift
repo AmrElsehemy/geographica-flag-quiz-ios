@@ -2,8 +2,13 @@ import SwiftUI
 
 @main
 struct FlagQuizApp: App {
-    @State private var model = AppModel()
+    @State private var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        // Debug builds can boot into a fixed state for screenshots (see DemoMode).
+        _model = State(initialValue: DemoMode.makeModel() ?? AppModel())
+    }
 
     var body: some Scene {
         WindowGroup {

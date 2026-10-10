@@ -8,7 +8,7 @@ change; check the current requirements before submitting.
 | App icon (1024 px, opaque) | **Done as a first concept**: `Design/app-icon.svg`, rendered into `App/Assets.xcassets`. Needs your approval. |
 | Public name and subtitle | **Proposed** below. Needs your approval. |
 | Store text (promo, description, keywords) | **Draft** below. |
-| Screenshots | **Planned** below. Not captured yet: they must come from the real app. |
+| Screenshots | **Automation built** (see section 3). First run and review still to do. |
 | Privacy label, age rating, support/privacy URLs | **Checklist** below. Needs decisions and URLs. |
 
 ## 1. Naming
@@ -70,22 +70,27 @@ actual build rather than mocking them up.
 
 Don't screenshot the ad offer (it can read as an ad-driven app) or any placeholder screen.
 
-### How to capture (three phases, each useful on its own)
+### How to capture
 
-1. **Manual, now (about an hour).** Run on an iPhone 17 Pro Max simulator. Clean the status bar:
-   `xcrun simctl status_bar booted override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4`,
-   then `xcrun simctl io booted screenshot shot.png`. Awkward part: reaching each state by hand.
-2. **Repeatable states.** Add a `-demo-state <name>` launch argument that boots the app in memory
-   with a fixed progress and question (Nepal quiz, Romania look-alikes, mid-progress map, finished daily,
-   three-star result). Then an XCUITest target takes each screenshot as an `XCTAttachment`. A CI job
-   publishes them as an artifact, so every build can regenerate the set.
-3. **Framing.** A script (reusing the Chromium/Playwright pipeline already used for flags and the icon)
-   places each raw screenshot on a branded background with its caption, at 1320×2868. Don't use
-   Apple's device bezels without checking their marketing-asset terms (**verify**); a plain framed
-   screenshot is safe.
+Phases 2 and 3 are built. Screenshots come from the real app, not mock-ups.
 
-Phase 2 also feeds the planned Geographica content channel: the same demo states give clean gameplay
-footage for Shorts and Reels.
+1. **Demo states.** Debug builds accept `-demo-state <name>` (`App/DemoMode.swift`) and boot straight
+   into a fixed state with in-memory data, no ads and no analytics:
+   `quiz-nepal`, `quiz-lookalike`, `home`, `result-daily`, `result-stars`, `tutorial`. Release builds
+   contain none of it.
+2. **Capture.** The `FlagQuizScreenshots` UI test (`ScreenshotTests/`) launches each state, waits for
+   the screen, and saves a PNG. `Scripts/capture-screenshots.sh` boots the newest iPhone Pro Max
+   simulator (the 6.9" size), sets a clean 9:41 status bar and runs it.
+3. **Captions.** `Scripts/frame-screenshots.mjs` puts each shot on a branded background with the
+   caption from `Design/screenshots.json`, at 1320×2868. No Apple device bezels (their marketing terms
+   need checking first, **verify**).
+
+**Run it:** locally with `Scripts/capture-screenshots.sh` (macOS + Xcode + `xcodegen`), or in GitHub:
+Actions tab, "Screenshots", "Run workflow". Download the `screenshots` artifact (`raw/` and `framed/`).
+To change a caption or the order, edit `Design/screenshots.json`; to change what a shot shows, edit its
+state in `DemoMode.swift`. Regular CI also compiles the UI test target on every push.
+
+The same demo states can give clean gameplay footage for the planned Geographica content channel.
 
 ## 4. Store text (draft)
 
@@ -144,9 +149,8 @@ If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
 
 1. You approve or redirect: name, icon concept.
 2. Create the App Store Connect record (bundle id, name, categories) and the privacy/support URLs.
-3. Build phase 2 of the screenshot capture (demo states, UI test, CI artifact).
-4. Build phase 3 (captioned export).
-5. Review the set on a device, then upload with the TestFlight build.
+3. Run the "Screenshots" workflow, review the set, adjust captions and states.
+4. Upload with the TestFlight build.
 
 ## 7. Questions for you
 

@@ -46,6 +46,10 @@ Run out of fuel and you can **watch an ad to keep going**, once per attempt. Eve
 
 Teach-through-play: first launch drops straight into a three-flag guided practice round (skippable, replayable from settings, wrong answers free), then one-time hints appear in context. See [`docs/ONBOARDING.md`](docs/ONBOARDING.md).
 
+## App Store screenshots
+
+Captured from the real app by a UI test in debug "demo states", then captioned. Run the manual **Screenshots** workflow or `Scripts/capture-screenshots.sh`. Details in [`docs/APP_STORE.md`](docs/APP_STORE.md).
+
 ## Analytics
 
 Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.

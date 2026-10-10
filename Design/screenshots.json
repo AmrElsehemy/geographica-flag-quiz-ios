@@ -1,0 +1,12 @@
+{
+  "width": 1320,
+  "height": 2868,
+  "shots": [
+    { "file": "01-name-that-flag",      "caption": "Name that flag" },
+    { "file": "02-spot-the-lookalikes", "caption": "Spot the look-alikes" },
+    { "file": "03-unlock-the-world",    "caption": "Earn stars, unlock the world" },
+    { "file": "04-daily-challenge",     "caption": "A new challenge every day" },
+    { "file": "05-three-stars",         "caption": "Master 197 flags" },
+    { "file": "06-learn-as-you-play",   "caption": "Learn as you play" }
+  ]
+}

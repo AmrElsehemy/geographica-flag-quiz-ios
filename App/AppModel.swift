@@ -19,6 +19,9 @@ final class AppModel {
     @ObservationIgnored let ads = AdService()
     @ObservationIgnored let analytics: FlagQuizAnalytics
     @ObservationIgnored private var appSession: SessionAnalytics
+    @ObservationIgnored private let adsEnabled: Bool
+    /// A run to present at launch (debug demo mode only, used for screenshots).
+    private(set) var demoRun: Run?
 
     private enum Keys {
         static let sound = "flagquiz.sound"
@@ -28,7 +31,9 @@ final class AppModel {
     init(store: any ProgressStoring = UserDefaultsProgressStore(),
          onboardingStore: any OnboardingStoring = UserDefaultsOnboardingStore(),
          defaults: UserDefaults = .standard,
-         analyticsClient: any AnalyticsClient = LoggingAnalyticsClient()) {
+         analyticsClient: any AnalyticsClient = LoggingAnalyticsClient(),
+         adsEnabled: Bool = true) {
+        self.adsEnabled = adsEnabled
         let analytics = FlagQuizAnalytics(client: analyticsClient)
         self.analytics = analytics
         self.appSession = analytics.makeSession()
@@ -77,7 +82,17 @@ final class AppModel {
         analytics.hintSeen(hint)
     }
 
-    func prepareAds() async { await ads.prepare() }
+    func prepareAds() async {
+        guard adsEnabled else { return }
+        await ads.prepare()
+    }
+
+    func setDemoRun(_ run: Run?) { demoRun = run }
+
+    func consumeDemoRun() -> Run? {
+        defer { demoRun = nil }
+        return demoRun
+    }
 
     func requestRefuel(attemptID: String, refuelNumber: Int) async -> RefuelOutcome {
         await ads.requestRefuel(attemptID: attemptID, refuelNumber: refuelNumber,

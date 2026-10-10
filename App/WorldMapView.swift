@@ -16,6 +16,8 @@ struct Run: Identifiable {
     let kind: Kind
     /// Fixed at launch so a run that crosses midnight UTC still belongs to the day it started on.
     let startedAt = Date()
+    /// A ready-made session to play instead of building one (debug demo mode only).
+    var preset: QuizSession?
 
     var title: String {
         switch kind {
@@ -26,6 +28,7 @@ struct Run: Identifiable {
     }
 
     func makeSession() -> QuizSession {
+        if let preset { return preset }
         switch kind {
         case .stop(let stop): Adventure.session(for: stop)
         case .daily: DailyChallenge.session(for: startedAt)
@@ -58,6 +61,10 @@ struct WorldMapView: View {
                 if !model.onboarding.shouldShowTutorial { await model.prepareAds() }
             }
             .onAppear {
+                if let demo = model.consumeDemoRun() {
+                    run = demo
+                    return
+                }
                 if model.onboarding.shouldShowTutorial, run == nil { run = Run(kind: .tutorial(replay: false)) }
             }
             .navigationTitle("Flags Adventure")

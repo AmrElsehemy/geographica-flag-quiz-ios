@@ -18,3 +18,7 @@ jobs:
       - run: >
           xcodebuild build -project FlagQuiz.xcodeproj -scheme FlagQuiz
           -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
+      # Compile the screenshot UI tests too, so they can't rot between manual screenshot runs.
+      - run: >
+          xcodebuild build-for-testing -project FlagQuiz.xcodeproj -scheme FlagQuizScreenshots
+          -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
