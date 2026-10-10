@@ -29,7 +29,7 @@ struct Run: Identifiable {
 
     func makeSession() -> QuizSession {
         if let preset { return preset }
-        switch kind {
+        return switch kind {
         case .stop(let stop): Adventure.session(for: stop)
         case .daily: DailyChallenge.session(for: startedAt)
         case .tutorial: Tutorial.session()
