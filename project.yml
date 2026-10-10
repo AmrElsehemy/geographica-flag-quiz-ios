@@ -65,7 +65,17 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: ai.knowlly.flagquiz.screenshots
         TEST_TARGET_NAME: FlagQuiz
+# Once any scheme is declared XcodeGen stops generating the automatic ones, so the app's own scheme
+# must be declared too.
 schemes:
+  FlagQuiz:
+    build:
+      targets:
+        FlagQuiz: all
+    run:
+      config: Debug
+    archive:
+      config: Release
   FlagQuizScreenshots:
     build:
       targets:
