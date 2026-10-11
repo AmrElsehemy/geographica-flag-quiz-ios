@@ -1,4 +1,4 @@
-# Geographica: Flags Adventure
+# Geographica: Flag Trek
 
 A flag-identification adventure for iOS, and the first app in the **Geographica** family of independent geography apps.
 

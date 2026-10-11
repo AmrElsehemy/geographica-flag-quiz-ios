@@ -6,27 +6,36 @@ change; check the current requirements before submitting.
 | Piece | Status |
 |---|---|
 | App icon (1024 px, opaque) | **Done as a first concept**: `Design/app-icon.svg`, rendered into `App/Assets.xcassets`. Needs your approval. |
-| Public name and subtitle | **Proposed** below. Needs your approval. |
+| Public name and subtitle | **Approved**: Geographica: Flag Trek / A flag quiz around the world. |
 | Store text (promo, description, keywords) | **Draft** below. |
 | Screenshots | **Automation built** (see section 3). First run and review still to do. |
 | Privacy label, age rating, support/privacy URLs | **Checklist** below. Needs decisions and URLs. |
 
 ## 1. Naming
 
-| Field | Proposal | Limit |
+**Approved:** the public name is **Geographica: Flag Trek**.
+
+| Field | Value | Limit |
 |---|---|---|
-| App name | **Geographica: Flags Adventure** (28) | 30 |
-| Subtitle | **Guess flags, travel the world** (29) | 30 |
-| Home-screen name (`CFBundleDisplayName`) | **Flags Adventure** (currently set) | about 12 before iOS truncates; consider "Flags Adv." or "Geographica" |
+| App name | **Geographica: Flag Trek** (22) | 30 |
+| Subtitle | **A flag quiz around the world** (28) | 30 |
+| Home-screen name (`CFBundleDisplayName`) | **Flag Trek** (9) | about 12 before iOS truncates |
 | Bundle id | `ai.knowlly.flagquiz` (set) | permanent once the app is created |
 
-Notes:
-- The bundle id and the App Store name are hard to change later. The in-app display name is easy.
-- "Geographica" is the family brand and "Flags Adventure" the game, so the next apps read as one set
-  (Geographica: Capitals, and so on). **Verify** the name is free in App Store Connect and do a trademark search
-  before committing.
-- Home-screen text is shortened by iOS if long. "Flags Adventure" (15) will likely truncate on a
-  device, so check it on a real phone. "Geographica" (11) fits.
+Why this name:
+- Flag quiz names are a crowded field (many near-identical "Flag Quiz: World Flags" style titles), so the
+  distinctive "Geographica" prefix is what makes the app findable.
+- "Trek" is the journey across continents, which is the map. "Geographica" is the family brand, so future
+  apps read as one set (Geographica: Capitals, and so on).
+- "Flag" is in the name and "flag quiz" in the subtitle, which are both indexed for search, so the
+  keyword list below doesn't repeat them.
+
+Still to do (**verify**): the name is only reserved when the app record is created in App Store Connect,
+and a web search can't prove a name is free. Check availability there and do a trademark search. "Trek"
+is also a well-known brand word (bikes, Star Trek). Existing apps seen in search and avoided: FlagWise,
+and Flaggle (a daily flag-guessing game).
+
+The bundle id and App Store name are hard to change later. The in-app display name is easy.
 
 ## 2. App icon
 
@@ -97,9 +106,9 @@ The same demo states can give clean gameplay footage for the planned Geographica
 **Promotional text** (170 max, editable any time, 79 used):
 > Guess the flag, earn stars and unlock the world. New Daily Challenge every day!
 
-**Keywords** (100 max, comma-separated, no spaces, 97 used). The name and subtitle are indexed
-already, so they aren't repeated:
-> flag,quiz,geography,countries,world,trivia,learn,brain,daily,nations,atlas,streak,guess,education
+**Keywords** (100 max, comma-separated, no spaces, 94 used). The name and subtitle are indexed already,
+so "flag" and "quiz" are not repeated:
+> geography,countries,world,trivia,learn,brain,daily,nations,atlas,streak,guess,education,travel
 
 **Description** (4000 max, 878 used):
 
@@ -147,14 +156,13 @@ If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
 
 ## 6. Order of work
 
-1. You approve or redirect: name, icon concept.
+1. You approve or redirect: icon concept (the name is approved).
 2. Create the App Store Connect record (bundle id, name, categories) and the privacy/support URLs.
 3. Run the "Screenshots" workflow, review the set, adjust captions and states.
 4. Upload with the TestFlight build.
 
-## 7. Questions for you
+## 7. Open questions
 
-1. Is **Geographica: Flags Adventure** the final public name, and **Guess flags, travel the world** the subtitle?
-2. Is the globe-and-pennant icon the right direction?
-3. Which storefronts and what country list for launch (see the Taiwan/Palestine/Kosovo note)?
-4. Where will the privacy policy and support pages live?
+1. Is the globe-and-pennant icon the right direction? Alternatives on request.
+2. Which storefronts and what country list for launch (see the Taiwan/Palestine/Kosovo note)?
+3. Where will the privacy policy and support pages live?

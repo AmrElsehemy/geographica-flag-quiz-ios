@@ -67,7 +67,7 @@ struct WorldMapView: View {
                 }
                 if model.onboarding.shouldShowTutorial, run == nil { run = Run(kind: .tutorial(replay: false)) }
             }
-            .navigationTitle("Flags Adventure")
+            .navigationTitle("Flag Trek")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
