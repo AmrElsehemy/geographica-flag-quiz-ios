@@ -58,7 +58,10 @@ struct WorldMapView: View {
             .background(Theme.background.ignoresSafeArea())
             // First launch goes straight into the tutorial, so hold the ad-consent form until it's done.
             .task(id: model.onboarding.shouldShowTutorial) {
-                if !model.onboarding.shouldShowTutorial { await model.prepareAds() }
+                if !model.onboarding.shouldShowTutorial {
+                    await model.prepareAds()        // the consent form first,
+                    model.startGameCenter()         // then Game Center sign-in, so dialogs don't collide
+                }
             }
             .onAppear {
                 if let demo = model.consumeDemoRun() {
@@ -82,7 +85,13 @@ struct WorldMapView: View {
                     }
                     .accessibilityLabel("Settings")
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    if model.gameCenter.isAuthenticated {
+                        Button { model.gameCenter.showLeaderboard() } label: {
+                            Image(systemName: "trophy.fill").foregroundStyle(Theme.star)
+                        }
+                        .accessibilityLabel("Daily leaderboard")
+                    }
                     Label("\(model.progress.totalStars)", systemImage: "star.fill")
                         .foregroundStyle(Theme.star)
                         .accessibilityLabel("\(model.progress.totalStars) stars earned")

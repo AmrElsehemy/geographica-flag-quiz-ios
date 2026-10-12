@@ -36,6 +36,11 @@ enum DemoScene: String {
     }
 }
 
+/// Accepts every score, so the daily result shows the signed-in "added to the leaderboard" state.
+struct DemoScoreSubmitter: ScoreSubmitting {
+    func submit(score: Int, leaderboardID: String) async throws {}
+}
+
 extension DemoMode {
     @MainActor
     fileprivate static func debugModel() -> AppModel? {
@@ -58,8 +63,12 @@ extension DemoMode {
             onboardingStore: onboardingStore,
             defaults: UserDefaults(suiteName: "ai.knowlly.flagquiz.demo") ?? .standard,
             analyticsClient: NoOpAnalyticsClient(),
-            adsEnabled: false
+            adsEnabled: false,
+            gameCenterEnabled: false,
+            scoreSubmitter: DemoScoreSubmitter(),
+            scoreQueueStore: InMemoryScoreQueueStore()
         )
+        model.gameCenter.markAuthenticatedForDemo()
         model.setDemoRun(run(for: scene))
         return model
     }

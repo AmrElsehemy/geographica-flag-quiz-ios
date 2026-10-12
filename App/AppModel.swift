@@ -20,6 +20,11 @@ final class AppModel {
     @ObservationIgnored let analytics: FlagQuizAnalytics
     @ObservationIgnored private var appSession: SessionAnalytics
     @ObservationIgnored private let adsEnabled: Bool
+    @ObservationIgnored private let gameCenterEnabled: Bool
+    @ObservationIgnored let gameCenter = GameCenterService()
+    @ObservationIgnored private let leaderboard: LeaderboardSubmitter
+    /// How the latest counting daily score fared with the leaderboard (nil until one is recorded).
+    private(set) var dailyLeaderboardStatus: SubmitOutcome?
     /// A run to present at launch (debug demo mode only, used for screenshots).
     private(set) var demoRun: Run?
 
@@ -32,8 +37,13 @@ final class AppModel {
          onboardingStore: any OnboardingStoring = UserDefaultsOnboardingStore(),
          defaults: UserDefaults = .standard,
          analyticsClient: any AnalyticsClient = LoggingAnalyticsClient(),
-         adsEnabled: Bool = true) {
+         adsEnabled: Bool = true,
+         gameCenterEnabled: Bool = true,
+         scoreSubmitter: any ScoreSubmitting = GameKitScoreSubmitter(),
+         scoreQueueStore: any ScoreQueueStoring = UserDefaultsScoreQueueStore()) {
         self.adsEnabled = adsEnabled
+        self.gameCenterEnabled = gameCenterEnabled
+        self.leaderboard = LeaderboardSubmitter(submitter: scoreSubmitter, store: scoreQueueStore)
         let analytics = FlagQuizAnalytics(client: analyticsClient)
         self.analytics = analytics
         self.appSession = analytics.makeSession()
@@ -61,7 +71,10 @@ final class AppModel {
         feedback.play(event, soundEnabled: soundEnabled, hapticsEnabled: hapticsEnabled)
     }
 
-    func appBecameActive() { appSession.becameActive() }
+    func appBecameActive() {
+        appSession.becameActive()
+        if gameCenter.isAuthenticated { flushLeaderboard() }
+    }
     func appWentToBackground() { appSession.wentToBackground() }
 
     func completeTutorial() {
@@ -104,8 +117,36 @@ final class AppModel {
         store.save(progress)
     }
 
+    /// Starts Game Center sign-in. Called after the tutorial and the ad-consent form, so a new player
+    /// isn't met by a stack of dialogs.
+    func startGameCenter() {
+        guard gameCenterEnabled else { return }
+        gameCenter.onAuthenticated = { [weak self] in self?.flushLeaderboard() }
+        gameCenter.start()
+    }
+
+    /// Delivers any score waiting for today's leaderboard.
+    func flushLeaderboard() {
+        Task {
+            apply(await leaderboard.flush())
+        }
+    }
+
+    private func apply(_ outcome: SubmitOutcome) {
+        guard outcome != .nothingToSubmit else { return }
+        dailyLeaderboardStatus = outcome
+        analytics.leaderboardSubmit(outcome)
+    }
+
+    /// Records a finished daily run. Only the first attempt of a UTC day counts; that score is also
+    /// sent to the Game Center leaderboard (queued and retried if it can't go out yet).
     func finishDaily(score: Int, on date: Date = Date()) {
-        progress.recordDaily(score: score, on: date)
+        let counted = progress.recordDaily(score: score, on: date)
         store.save(progress)
+        guard counted else { return }
+        dailyLeaderboardStatus = nil
+        Task {
+            apply(await leaderboard.record(score: score, on: date))
+        }
     }
 }

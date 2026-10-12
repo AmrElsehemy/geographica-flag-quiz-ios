@@ -50,12 +50,16 @@ Teach-through-play: first launch drops straight into a three-flag guided practic
 
 Captured from the real app by a UI test in debug "demo states", then captioned. Run the manual **Screenshots** workflow or `Scripts/capture-screenshots.sh`. Details in [`docs/APP_STORE.md`](docs/APP_STORE.md).
 
+## Daily leaderboard
+
+Game Center leaderboard for the Daily Challenge: the first attempt each UTC day posts its score; scores that can't go out are queued and retried the same day. Needs a recurring leaderboard created in App Store Connect first. Setup, behaviour and limits: [`docs/GAME_CENTER.md`](docs/GAME_CENTER.md).
+
 ## Analytics
 
 Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.
 
 ## Roadmap
 
-1. Game Center leaderboard for the daily challenge.
-2. App icon and screenshots, real AdMob ids, TestFlight.
+1. Create the leaderboard in App Store Connect, then test with a sandbox account.
+2. Real AdMob ids, final icon and screenshots, TestFlight.
 3. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.

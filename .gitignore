@@ -8,3 +8,4 @@ App/Info.plist
 build/
 node_modules/
 package-lock.json
+App/FlagQuiz.entitlements

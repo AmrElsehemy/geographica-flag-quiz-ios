@@ -64,6 +64,7 @@ public enum FlagQuizEvent {
     public static let rewardCompleted = "reward_completed"
     public static let rewardFailed = "reward_failed"
     public static let dailyCompleted = "daily_completed"
+    public static let leaderboardSubmit = "leaderboard_submit"
     public static let tutorialStarted = "tutorial_started"
     public static let tutorialStep = "tutorial_step"
     public static let tutorialCompleted = "tutorial_completed"
@@ -97,6 +98,15 @@ public struct FlagQuizAnalytics: Sendable {
 
     public func makeTutorial(replay: Bool) -> TutorialAnalytics {
         TutorialAnalytics(analytics: self, replay: replay)
+    }
+
+    /// A daily score was handed to Game Center (`submitted`) or saved to retry later (`queued`).
+    public func leaderboardSubmit(_ outcome: SubmitOutcome) {
+        switch outcome {
+        case .submitted: send(FlagQuizEvent.leaderboardSubmit, ["status": "submitted"])
+        case .queued: send(FlagQuizEvent.leaderboardSubmit, ["status": "queued"])
+        case .nothingToSubmit: break
+        }
     }
 
     /// A one-time hint was shown and dismissed or acted on.

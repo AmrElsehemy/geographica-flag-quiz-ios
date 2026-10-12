@@ -38,7 +38,9 @@ struct RunView: View {
             case .completed(let stars):
                 ResultView(title: run.title, session: session, stars: stars, isDaily: isDaily,
                            nextStop: nextStop, retry: retry, next: playNext, close: close,
-                           note: dailyNote ?? (starsHintShown ? Hint.stars.message : nil))
+                           note: dailyNote ?? (starsHintShown ? Hint.stars.message : nil),
+                           onLeaderboard: isDaily && model.gameCenter.isAuthenticated
+                               ? { model.gameCenter.showLeaderboard() } : nil)
                     .onAppear { record(stars: stars) }
             case .outOfFuel:
                 ResultView(title: run.title, session: session, stars: nil, isDaily: isDaily,
@@ -96,8 +98,23 @@ struct RunView: View {
 
     private var dailyNote: String? {
         guard case .daily(let counts) = run.kind else { return nil }
-        return counts ? "Counts toward today's score and your streak."
-                      : "Practice round. Your daily score and streak aren't affected."
+        guard counts else { return "Practice round. Your daily score and streak aren't affected." }
+        var lines = ["Counts toward today's score and your streak."]
+        if let leaderboard = leaderboardNote { lines.append(leaderboard) }
+        return lines.joined(separator: "\n")
+    }
+
+    private var leaderboardNote: String? {
+        switch model.dailyLeaderboardStatus {
+        case .submitted:
+            return "Score added to today's leaderboard."
+        case .queued:
+            return model.gameCenter.isAuthenticated
+                ? "Score saved. It will reach the leaderboard shortly."
+                : "Sign in to Game Center to join the leaderboard."
+        case .nothingToSubmit, nil:
+            return nil
+        }
     }
 
     /// Records the result once. `stars` is nil when the run ended out of fuel.
@@ -338,6 +355,8 @@ private struct ResultView: View {
     let next: () -> Void
     let close: () -> Void
     var note: String?
+    /// Shows a "View leaderboard" button when set (daily runs, signed in to Game Center).
+    var onLeaderboard: (() -> Void)?
     var canRefuel = false
     var refueling = false
     var refuelMessage: String?
@@ -382,6 +401,7 @@ private struct ResultView: View {
                 if stars != nil, let nextStop, !isDaily {
                     primary("Next: Stop \(nextStop.number)", action: next)
                 }
+                if let onLeaderboard { secondary("View leaderboard", action: onLeaderboard) }
                 secondary(isDaily ? "Practice again" : (stars == nil ? "Try again" : "Play again"), action: retry)
                 secondary("Back to map", action: close)
             }

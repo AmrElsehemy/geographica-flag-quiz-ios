@@ -27,6 +27,7 @@ passing another `AnalyticsClient` to `AppModel`; nothing else changes.
 | `tutorial_completed` | All three flags answered | `replay`, `mistakes`, `duration_s` |
 | `tutorial_skipped` | Player taps Skip | `replay`, `step` (questions answered so far) |
 | `hint_seen` | A one-time hint is dismissed or acted on | `hint` (`mapStart`, `stars`, `daily`) |
+| `leaderboard_submit` | A counting daily score was sent to Game Center or saved to retry | `status` (`submitted`, `queued`) |
 | `daily_completed` | First (counting) daily attempt recorded | `score`, `streak` |
 
 \* run properties: `mode` (`adventure`, `daily`, `daily_practice`), `level_id`, `attempt_id`, `questions`, and for
