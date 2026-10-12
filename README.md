@@ -54,12 +54,17 @@ Captured from the real app by a UI test in debug "demo states", then captioned. 
 
 Game Center leaderboard for the Daily Challenge: the first attempt each UTC day posts its score; scores that can't go out are queued and retried the same day. Needs a recurring leaderboard created in App Store Connect first. Setup, behaviour and limits: [`docs/GAME_CENTER.md`](docs/GAME_CENTER.md).
 
+## TestFlight
+
+One-click upload through the manual **TestFlight** workflow (signing through an App Store Connect API key). Needs your Apple account, an app record and four secrets: step-by-step in [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md). A dry-run mode checks everything except signing and upload.
+
 ## Analytics
 
 Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.
 
 ## Roadmap
 
-1. Create the leaderboard in App Store Connect, then test with a sandbox account.
-2. Real AdMob ids, final icon and screenshots, TestFlight.
-3. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.
+1. Your Apple setup (developer account, app record, API key, secrets), then the first TestFlight build.
+2. Create the Game Center leaderboard and test it with a sandbox account.
+3. Real AdMob ids, final icon and screenshots.
+4. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.

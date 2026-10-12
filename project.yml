@@ -41,12 +41,20 @@ targets:
         CFBundleDisplayName: Flag Trek
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
-        # Google's sample AdMob app id. Replace with the real one before release.
-        GADApplicationIdentifier: ca-app-pub-3940256099942544~1458002511
+        # The AdMob app id comes from the ADMOB_APP_ID build setting (Google's sample id by default).
+        GADApplicationIdentifier: $(ADMOB_APP_ID)
+        # "test" = Google's sample ads (TestFlight builds); "production" = the real rewarded unit below.
+        FlagQuizAdsMode: $(FLAGQUIZ_ADS_MODE)
         # Production rewarded ad unit for "refuel". Empty = no ads in Release builds (safe default).
         FlagQuizRewardedUnitID: $(FLAGQUIZ_REWARDED_UNIT_ID)
+        # The app only uses standard system encryption (HTTPS), which is exempt. Without this key,
+        # App Store Connect asks the export-compliance question for every build. (verify)
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
+        # Release ad settings. The release workflow overrides these; see docs/TESTFLIGHT.md.
+        ADMOB_APP_ID: ca-app-pub-3940256099942544~1458002511   # Google's sample id: never ship this
+        FLAGQUIZ_ADS_MODE: production
         FLAGQUIZ_REWARDED_UNIT_ID: ""
         PRODUCT_NAME: Flag Trek
         PRODUCT_BUNDLE_IDENTIFIER: ai.knowlly.flagquiz

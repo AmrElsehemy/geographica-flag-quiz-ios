@@ -22,3 +22,8 @@ jobs:
       - run: >
           xcodebuild build-for-testing -project FlagQuiz.xcodeproj -scheme FlagQuizScreenshots
           -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
+      # TestFlight builds are Release builds, and Release-only code (ad configuration, no demo mode)
+      # is never compiled by the Debug builds above, so compile it on every push too.
+      - run: >
+          xcodebuild build -project FlagQuiz.xcodeproj -scheme FlagQuiz -configuration Release
+          -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO

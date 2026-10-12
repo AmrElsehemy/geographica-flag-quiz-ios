@@ -1,0 +1,149 @@
+name: TestFlight
+# Builds a signed Release archive and uploads it to App Store Connect (TestFlight).
+# Run manually: Actions > TestFlight > Run workflow. It needs four repository secrets and an app
+# record in App Store Connect; see docs/TESTFLIGHT.md. Use "dry run" to check everything except
+# signing and uploading.
+on:
+  workflow_dispatch:
+    inputs:
+      ads_mode:
+        description: "Ads: 'test' = Google sample ads (use for TestFlight), 'production' = real ads (needs the ADMOB_* secrets)"
+        type: choice
+        options: [test, production]
+        default: test
+      dry_run:
+        description: "Dry run: run the preflight and report which secrets exist, but don't sign or upload"
+        type: boolean
+        default: false
+      build_number_offset:
+        description: "Added to the run number to make the build number. Raise it if App Store Connect says the build number was already used."
+        type: string
+        default: "0"
+
+jobs:
+  upload:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      ADS_MODE: ${{ inputs.ads_mode }}
+      ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+      ADMOB_REWARDED_UNIT_ID: ${{ secrets.ADMOB_REWARDED_UNIT_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight (project settings, icon, privacy manifest, ad ids)
+        run: python3 Scripts/preflight-release.py
+
+      - name: Check Apple secrets
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          missing=""
+          for name in APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64; do
+            if [ -z "${!name}" ]; then
+              missing="$missing $name"
+              echo "missing: $name"
+            else
+              echo "present: $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "::notice title=Dry run::Still missing secrets:$missing (see docs/TESTFLIGHT.md)"
+            else
+              echo "::error title=Missing secrets::Add these repository secrets and run again:$missing (see docs/TESTFLIGHT.md)"
+              exit 1
+            fi
+          fi
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: preflight passed, stopping before signing and upload."
+          fi
+
+      - name: Install xcodegen
+        if: ${{ !inputs.dry_run }}
+        run: brew install xcodegen
+
+      - name: Generate the Xcode project
+        if: ${{ !inputs.dry_run }}
+        run: xcodegen generate
+
+      - name: Save the App Store Connect API key
+        if: ${{ !inputs.dry_run }}
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8"
+          chmod 600 "$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
+
+      - name: Archive (Release, automatic signing through the API key)
+        if: ${{ !inputs.dry_run }}
+        env:
+          OFFSET: ${{ inputs.build_number_offset }}
+        run: |
+          BUILD_NUMBER=$(( GITHUB_RUN_NUMBER + ${OFFSET:-0} ))
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          ADS_SETTINGS=("FLAGQUIZ_ADS_MODE=$ADS_MODE")
+          if [ "$ADS_MODE" = "production" ]; then
+            ADS_SETTINGS+=("ADMOB_APP_ID=$ADMOB_APP_ID" "FLAGQUIZ_REWARDED_UNIT_ID=$ADMOB_REWARDED_UNIT_ID")
+          fi
+          xcodebuild archive \
+            -project FlagQuiz.xcodeproj -scheme FlagQuiz -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/FlagTrek.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            "${ADS_SETTINGS[@]}"
+
+      - name: Export and upload to App Store Connect
+        if: ${{ !inputs.dry_run }}
+        run: |
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath build/FlagTrek.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          {
+            echo "### Uploaded to App Store Connect"
+            echo "- Build number: $BUILD_NUMBER"
+            echo "- Ads mode: $ADS_MODE"
+            echo "- Processing takes about 10 to 30 minutes, then the build appears in TestFlight."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the debug symbols
+        if: ${{ !inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dSYMs
+          path: build/FlagTrek.xcarchive/dSYMs
+          retention-days: 90
+
+      - name: Remove the API key from the runner
+        if: ${{ always() && !inputs.dry_run }}
+        run: rm -f "${ASC_KEY_PATH:?}"

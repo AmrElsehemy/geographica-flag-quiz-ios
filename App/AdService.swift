@@ -43,13 +43,17 @@ final class AdService {
         return await refueler.requestRefuel(attemptID: attemptID, refuelNumber: refuelNumber, context: context)
     }
 
-    /// Debug builds use Google's sample units. Release builds use the unit id from Info.plist
-    /// (`FlagQuizRewardedUnitID`) and show no ads at all if it is missing, so a sample unit can
-    /// never ship by accident.
+    /// Debug builds use Google's sample units. Release builds use sample units only when built in
+    /// `test` mode (TestFlight builds, so testers can try the rewarded ad). Otherwise they use the unit
+    /// id from Info.plist (`FlagQuizRewardedUnitID`) and show no ads at all if it is missing, so a
+    /// sample unit can never reach the App Store by accident (the release preflight enforces this too).
     private static func configuration() -> AdMobConfiguration {
         #if DEBUG
         return .testing
         #else
+        if Bundle.main.object(forInfoDictionaryKey: "FlagQuizAdsMode") as? String == "test" {
+            return .testing
+        }
         let id = Bundle.main.object(forInfoDictionaryKey: "FlagQuizRewardedUnitID") as? String
         guard let id, !id.isEmpty else { return AdMobConfiguration(rewardedUnitIDs: [:]) }
         return AdMobConfiguration(rewardedUnitIDs: [Refuel.placement: id])

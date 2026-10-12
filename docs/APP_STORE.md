@@ -159,7 +159,7 @@ If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
 1. You approve or redirect: icon concept (the name is approved).
 2. Create the App Store Connect record (bundle id, name, categories) and the privacy/support URLs.
 3. Run the "Screenshots" workflow, review the set, adjust captions and states.
-4. Upload with the TestFlight build.
+4. Upload with the TestFlight build (see `TESTFLIGHT.md`).
 
 ## 7. Open questions
 
