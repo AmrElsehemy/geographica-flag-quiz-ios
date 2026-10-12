@@ -58,10 +58,13 @@ final class GameCenterService {
     }
 }
 
-@MainActor
+/// GameKit calls this on the main thread, but its protocol isn't main-actor isolated, so the method is
+/// `nonisolated` and hops to the main actor to dismiss the screen.
 private final class LeaderboardDismissDelegate: NSObject, GKGameCenterControllerDelegate {
-    func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
-        gameCenterViewController.dismiss(animated: true)
+    nonisolated func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        Task { @MainActor in
+            gameCenterViewController.dismiss(animated: true)
+        }
     }
 }
 
