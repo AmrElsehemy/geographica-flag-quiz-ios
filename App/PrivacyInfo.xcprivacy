@@ -2,8 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- The app itself does not track people or collect data off the device. Third-party SDKs (Google
-	     Mobile Ads, User Messaging Platform) ship their own manifests. Review before release. -->
+	<!-- The app itself does not track people or collect data off the device. Version 1.0 ships with no ad or analytics SDKs. If one is added, review its manifest. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>

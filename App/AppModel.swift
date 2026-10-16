@@ -95,6 +95,9 @@ final class AppModel {
         analytics.hintSeen(hint)
     }
 
+    /// Whether running out of fuel offers a rewarded ad. False while the app ships without ads.
+    var refuelOfferAvailable: Bool { adsEnabled && ads.isEnabled }
+
     func prepareAds() async {
         guard adsEnabled else { return }
         await ads.prepare()

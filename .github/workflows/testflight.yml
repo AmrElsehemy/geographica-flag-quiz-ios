@@ -6,11 +6,6 @@ name: TestFlight
 on:
   workflow_dispatch:
     inputs:
-      ads_mode:
-        description: "Ads: 'test' = Google sample ads (use for TestFlight), 'production' = real ads (needs the ADMOB_* secrets)"
-        type: choice
-        options: [test, production]
-        default: test
       dry_run:
         description: "Dry run: run the preflight and report which secrets exist, but don't sign or upload"
         type: boolean
@@ -25,16 +20,13 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 60
     env:
-      ADS_MODE: ${{ inputs.ads_mode }}
-      ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
-      ADMOB_REWARDED_UNIT_ID: ${{ secrets.ADMOB_REWARDED_UNIT_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Preflight (project settings, icon, privacy manifest, ad ids)
+      - name: Preflight (project settings, icon, privacy manifest)
         run: python3 Scripts/preflight-release.py
 
       - name: Check Apple secrets
@@ -88,10 +80,6 @@ jobs:
         run: |
           BUILD_NUMBER=$(( GITHUB_RUN_NUMBER + ${OFFSET:-0} ))
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
-          ADS_SETTINGS=("FLAGQUIZ_ADS_MODE=$ADS_MODE")
-          if [ "$ADS_MODE" = "production" ]; then
-            ADS_SETTINGS+=("ADMOB_APP_ID=$ADMOB_APP_ID" "FLAGQUIZ_REWARDED_UNIT_ID=$ADMOB_REWARDED_UNIT_ID")
-          fi
           xcodebuild archive \
             -project FlagQuiz.xcodeproj -scheme FlagQuiz -configuration Release \
             -destination 'generic/platform=iOS' \
@@ -101,8 +89,7 @@ jobs:
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
-            "${ADS_SETTINGS[@]}"
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
       - name: Export and upload to App Store Connect
         if: ${{ !inputs.dry_run }}
@@ -132,7 +119,6 @@ jobs:
           {
             echo "### Uploaded to App Store Connect"
             echo "- Build number: $BUILD_NUMBER"
-            echo "- Ads mode: $ADS_MODE"
             echo "- Processing takes about 10 to 30 minutes, then the build appears in TestFlight."
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -14,10 +14,10 @@ below in order. Steps and field names in App Store Connect shift between version
 | Release build compiles | Compiled by regular CI on every push (new). |
 | Privacy manifest (`App/PrivacyInfo.xcprivacy`) | Added: the app uses `UserDefaults`, which Apple requires you to declare (**verify** the entries). |
 | Export compliance (`ITSAppUsesNonExemptEncryption = NO`) | Set, so TestFlight doesn't ask on every build (**verify** it's right for you: the app only uses standard HTTPS). |
-| Ads in TestFlight builds | Google **sample ads** (so testers can try the "watch an ad to keep going" button). Never earns money, never for the App Store. |
+| Ads | None. Version 1.0 ships without ads or an ad SDK. |
 | Build numbers | Automatic: the run number, plus an optional offset. |
 
-The preflight blocks a *production* build that has Google's sample ad ids or no ad ids, an icon with
+The preflight blocks a build that has Google's sample ad id left in `project.yml`, an icon with
 transparency, a missing privacy manifest, a bad version number or a missing entitlement.
 
 ## Your steps, in order
@@ -41,7 +41,6 @@ transparency, a missing privacy manifest, a bad version number or a missing enti
    | `ASC_KEY_ID` | The API key's Key ID |
    | `ASC_ISSUER_ID` | The Issuer ID |
    | `ASC_KEY_P8_BASE64` | The `.p8` file, base64-encoded: `base64 -i AuthKey_XXXX.p8 \| pbcopy` |
-   | `ADMOB_APP_ID`, `ADMOB_REWARDED_UNIT_ID` | **Only for production builds**, later. Not needed for TestFlight. |
 
 6. **Dry run first.** Actions > TestFlight > Run workflow, tick **Dry run**. It runs the preflight
    and prints `present:` or `missing:` for each secret, without signing or uploading. Fix anything
@@ -61,7 +60,7 @@ transparency, a missing privacy manifest, a bad version number or a missing enti
 > Thanks for testing Geographica: Flag Trek!
 >
 > Please try: the first-launch tutorial (and Skip), a few stops on the map, running out of fuel and
-> tapping "Watch an ad to keep going" (test ads in this build), the Daily Challenge and its
+> running out of fuel (it just offers Try again, there are no ads), the Daily Challenge and its
 > leaderboard, and turning sound/haptics off in Settings.
 >
 > Tell us: anything confusing in the first minute, flags that felt too easy or too hard, and any
@@ -81,12 +80,10 @@ transparency, a missing privacy manifest, a bad version number or a missing enti
 
 ## Before the *App Store* (not needed for TestFlight)
 
-Create the real AdMob app and rewarded unit, add `ADMOB_APP_ID` and `ADMOB_REWARDED_UNIT_ID` as
-secrets, and run with **ads_mode = production**. The preflight refuses to continue if either is
-missing or still Google's sample. Then the items in `APP_STORE.md` (name check, privacy policy,
-age rating, screenshots).
+Nothing ad-related is needed: 1.0 has no ads. Do the items in `APP_STORE.md` (name check, privacy
+policy, age rating, screenshots).
 
 ## Manual fallback
 
 If CI signing gives trouble, you can archive in Xcode on a Mac (Product > Archive, then Distribute App
-> App Store Connect > Upload). Set `FLAGQUIZ_ADS_MODE=test` in the build settings for a TestFlight build.
+> App Store Connect > Upload).

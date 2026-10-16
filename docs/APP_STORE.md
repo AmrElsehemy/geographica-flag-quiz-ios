@@ -124,14 +124,14 @@ Travel the globe one continent at a time. Each stop shows you a flag: pick the r
 • A Daily Challenge: ten flags, the same for everyone, new every day
 • Learn as you play: a quick three-flag warm-up and you're off
 
-No account, no sign-up, and it works offline. If you run out of fuel you can optionally watch a short ad to keep going; you never have to.
+No ads, no account, no sign-up, and it works offline.
 
 Perfect for geography fans, quiz lovers, travellers and curious minds of any age. How many stars can you collect?
 ```
 
 Every claim above matches the code today (197 flags, look-alike distractors, 3 fuel, streak bonus, daily
-set, optional rewarded ad, no account, offline play). Re-check this list before each release.
-If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
+set, no ads, no account, offline play). Re-check this list before each release.
+If ads, a Game Center leaderboard or any purchase ships, add them here.
 
 **Category:** primary Games › Trivia; secondary Games › Educational (**verify** available subcategories).
 
@@ -139,11 +139,10 @@ If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
 
 - **Privacy policy URL and support URL:** both required. Not created yet. The Knowlly Games web repo
   (`gametime-web`) is the natural home.
-- **Privacy "nutrition label":** AdMob collects identifiers and usage/diagnostic data, and
-  analytics events are currently device-log only. Declare what the AdMob SDK collects and answer from the
-  SDK's own privacy guidance. If a real analytics backend is added later, update the label.
-- **Consent:** the Google UMP consent form is already wired. Test it with a EU test device before release.
-  Decide on App Tracking Transparency based on how ads are configured.
+- **Privacy "nutrition label":** 1.0 has no ad or analytics SDKs and analytics events are device-log
+  only, so "Data Not Collected" should apply (**verify**, including Game Center). Update the label when
+  ads or a real analytics backend are added.
+- **Consent / tracking:** nothing to do for 1.0 (no ads, no tracking). Revisit when ads return.
 - **Age rating:** answer the questionnaire; expect a low rating. Do **not** tick "Made for Kids":
   that changes the allowed ads and analytics.
 - **Territories and country list:** the quiz includes Taiwan, Palestine and Kosovo. Some storefronts
@@ -152,7 +151,7 @@ If a "Remove Ads" purchase or a Game Center leaderboard ships, add them here.
   technical one.
 - **Flag artwork:** public-domain source (see the kit's `ATTRIBUTION.md`); some flags include state
   emblems. Fine for in-app use; keep marketing material to ordinary flags if in doubt.
-- **Ads:** real AdMob app id and rewarded unit id must replace the sample ones (`project.yml`).
+- **Ads:** none in 1.0; the app links no ad SDK.
 
 ## 6. Order of work
 

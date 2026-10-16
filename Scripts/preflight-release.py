@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks a release build is safe to upload, before spending 10 minutes archiving it.
 
-    ADS_MODE=test|production [ADMOB_APP_ID=... ADMOB_REWARDED_UNIT_ID=...] Scripts/preflight-release.py
+    Scripts/preflight-release.py
 
 Exits non-zero (and says why) if anything would get the build rejected or ship test settings to the
 App Store. Needs only the Python standard library.
@@ -24,26 +24,6 @@ def fail(message: str) -> None:
     errors.append(message)
 
 
-# --- ad configuration -------------------------------------------------------------------------
-mode = os.environ.get("ADS_MODE", "production")
-app_id = os.environ.get("ADMOB_APP_ID", "").strip()
-unit_id = os.environ.get("ADMOB_REWARDED_UNIT_ID", "").strip()
-
-if mode not in ("test", "production"):
-    fail(f"ADS_MODE must be 'test' or 'production', got {mode!r}")
-elif mode == "test":
-    notes.append("ads mode: TEST (Google sample ads; fine for TestFlight, never for the App Store)")
-else:
-    if not re.fullmatch(r"ca-app-pub-\d+~\d+", app_id):
-        fail("production build: ADMOB_APP_ID must be your real AdMob app id (ca-app-pub-XXXX~YYYY)")
-    elif app_id == SAMPLE_APP_ID:
-        fail("production build: ADMOB_APP_ID is Google's SAMPLE app id")
-    if not re.fullmatch(r"ca-app-pub-\d+/\d+", unit_id):
-        fail("production build: ADMOB_REWARDED_UNIT_ID must be your real rewarded ad unit id (ca-app-pub-XXXX/YYYY)")
-    elif unit_id.startswith(SAMPLE_UNIT_PREFIX):
-        fail("production build: ADMOB_REWARDED_UNIT_ID is Google's SAMPLE unit")
-    notes.append("ads mode: PRODUCTION")
-
 # --- project settings -------------------------------------------------------------------------
 project = (ROOT / "project.yml").read_text()
 
@@ -53,6 +33,10 @@ def setting(name: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
+# Version 1.0 ships without ads. Google's sample ids must never reach the App Store; when ads are added
+# back, replace this with a check for the real ids.
+if "ca-app-pub-3940256099942544" in project:
+    fail("project.yml still contains Google's sample AdMob id")
 bundle_id = setting("PRODUCT_BUNDLE_IDENTIFIER")
 if not bundle_id or bundle_id.startswith("com.example"):
     fail(f"bundle id looks unset or placeholder: {bundle_id!r}")

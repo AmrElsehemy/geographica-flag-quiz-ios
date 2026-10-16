@@ -46,13 +46,13 @@ struct RunView: View {
                 ResultView(title: run.title, session: session, stars: nil, isDaily: isDaily,
                            nextStop: nil, retry: retry, next: {}, close: close,
                            note: dailyNote,
-                           canRefuel: session.canRefuel, refueling: refueling, refuelMessage: refuelMessage,
+                           canRefuel: offersRefuel, refueling: refueling, refuelMessage: refuelMessage,
                            refuel: watchAdToRefuel)
                     .onAppear {
                         model.play(.hint)
-                        track { $0.refuelOffered(session: session) }
+                        if offersRefuel { track { $0.refuelOffered(session: session) } }
                         // A daily attempt is used up once it can't be continued.
-                        if !session.canRefuel { record(stars: nil) }
+                        if !offersRefuel { record(stars: nil) }
                     }
             }
         }
@@ -146,6 +146,9 @@ struct RunView: View {
         }
         if let stars { model.play(stars == 3 ? .milestone : .solve) }
     }
+
+    /// The out-of-fuel screen offers an ad only if this attempt can still be refuelled and ads exist.
+    private var offersRefuel: Bool { session.canRefuel && model.refuelOfferAvailable }
 
     private func close() {
         if session.state == .outOfFuel {

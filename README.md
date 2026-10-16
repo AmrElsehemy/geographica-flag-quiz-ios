@@ -28,10 +28,10 @@ Set your signing team in Xcode before running on a device.
 
 ## Rewarded refuel
 
-Run out of fuel and you can **watch an ad to keep going**, once per attempt. Everything policy-related comes from GameTimeKit (`MonetizationCoordinator`: consent, cooldown, exactly-once rewards; `GameTimeAdMob`: Google ads and the UMP consent form). This repo only decides the offer (`Refuel.swift`) and the UI.
+Run out of fuel and, when ads are enabled, you can **watch an ad to keep going**, once per attempt. Everything policy-related comes from GameTimeKit (`MonetizationCoordinator`: consent, cooldown, exactly-once rewards). This repo only decides the offer (`Refuel.swift`) and the UI.
 
-- **Debug builds** use Google's sample ad units and sample app id, so they are always safe to tap.
-- **Release builds** need real ids before shipping: replace `GADApplicationIdentifier` and set `FLAGQUIZ_REWARDED_UNIT_ID` in `project.yml`. With no unit id set, Release builds show no ads rather than a sample ad.
+- **Version 1.0 ships without ads.** No ad network has approved the account yet, so the app links no ad SDK, `AdService.isEnabled` is false and the "watch an ad" offer is hidden (out of fuel just offers Try again).
+- **To add ads later:** link a kit provider (`GameTimeAdMob` or `GameTimeAppLovin`), give `AdService` a real provider and consent step, set `isEnabled`, and add the ad ids and a preflight check back.
 - Rewarded ads are never forced: the button only appears after running dry, and a missing or cancelled ad costs nothing.
 
 ## Game design
@@ -66,5 +66,5 @@ Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels,
 
 1. Your Apple setup (developer account, app record, API key, secrets), then the first TestFlight build.
 2. Create the Game Center leaderboard and test it with a sandbox account.
-3. Real AdMob ids, final icon and screenshots.
+3. Final icon and screenshots. Ads come back in a later version, once an ad network approves the account.
 4. More question types (capitals, name-to-flag) from the same data, once the flag mechanic is polished.
