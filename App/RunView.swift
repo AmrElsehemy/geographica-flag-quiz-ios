@@ -29,6 +29,7 @@ struct RunView: View {
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
+            Group {
             switch session.state {
             case .inProgress:
                 QuizView(title: run.title, session: $session,
@@ -55,6 +56,8 @@ struct RunView: View {
                         if !offersRefuel { record(stars: nil) }
                     }
             }
+            }
+            .frame(maxWidth: Layout.contentWidth)
         }
         .onAppear { if tracker == nil { beginAttempt() } }
     }
@@ -439,6 +442,7 @@ struct TutorialView: View {
     var body: some View {
         ZStack {
             Theme.background.ignoresSafeArea()
+            Group {
             if case .completed = session.state {
                 completion
             } else {
@@ -449,6 +453,8 @@ struct TutorialView: View {
                          coachLines: Tutorial.steps.map(\.coach),
                          quitTitle: "Skip")
             }
+            }
+            .frame(maxWidth: Layout.contentWidth)
         }
         .onAppear {
             guard tracker == nil else { return }
@@ -496,4 +502,9 @@ struct TutorialView: View {
         model.completeTutorial()
         presented = nil
     }
+}
+
+/// Phone-width reading column; on iPad the content stays centred instead of stretching edge to edge.
+enum Layout {
+    static let contentWidth: CGFloat = 640
 }

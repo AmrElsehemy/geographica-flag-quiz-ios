@@ -54,6 +54,8 @@ struct WorldMapView: View {
                     }
                 }
                 .padding(16)
+                .frame(maxWidth: Layout.contentWidth + 80)
+                .frame(maxWidth: .infinity)
             }
             .background(Theme.background.ignoresSafeArea())
             // First launch goes straight into the tutorial, so hold the ad-consent form until it's done.
@@ -71,7 +73,12 @@ struct WorldMapView: View {
                 if model.onboarding.shouldShowTutorial, run == nil { run = Run(kind: .tutorial(replay: false)) }
             }
             .navigationTitle("Flag Trek")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // The map sits on a dark gradient; the system title would be black on it.
+                ToolbarItem(placement: .principal) {
+                    Text("Flag Trek").font(.headline).foregroundStyle(.white)
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
                         Button("How to play") { run = Run(kind: .tutorial(replay: true)) }
