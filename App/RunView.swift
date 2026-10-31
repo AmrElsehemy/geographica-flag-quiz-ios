@@ -147,7 +147,10 @@ struct RunView: View {
         case .tutorial:
             return
         }
-        if let stars { model.play(stars == 3 ? .milestone : .solve) }
+        if let stars {
+            model.noteLevelCompleted()
+            model.play(stars == 3 ? .milestone : .solve)
+        }
     }
 
     /// The out-of-fuel screen offers an ad only if this attempt can still be refuelled and ads exist.

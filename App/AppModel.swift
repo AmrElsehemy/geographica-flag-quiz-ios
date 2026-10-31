@@ -76,6 +76,9 @@ final class AppModel {
         analyticsSharing = enabled
     }
 
+    /// Counts a finished stop or daily toward the current session's `session_end.levels_completed`.
+    func noteLevelCompleted() { analyticsPipeline?.noteLevelCompleted() }
+
     func play(_ event: GameFeedbackEvent) {
         feedback.play(event, soundEnabled: soundEnabled, hapticsEnabled: hapticsEnabled)
     }
