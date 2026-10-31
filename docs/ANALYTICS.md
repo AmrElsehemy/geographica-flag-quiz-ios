@@ -1,16 +1,30 @@
 # Analytics
 
 Event names follow GameTimeKit's common vocabulary so dashboards can be shared across Knowlly games.
-Every event carries `game=flag_quiz` and `schema=<version>` (currently `1`; bump it on any breaking
-change). Events contain **no personal data**: only gameplay facts and a random per-attempt id.
+Every event carries `game=flag-trek` and `schema=<version>` (currently `1`; bump it on any breaking
+change). Events contain **no personal data**: only gameplay facts, a random per-attempt id and a
+random install id.
 
-Until a backend is chosen, `LoggingAnalyticsClient` writes events to the device log. Swap it by
-passing another `AnalyticsClient` to `AppModel`; nothing else changes.
+## Where events go
+
+`FlagQuizAnalytics` sends to GameTimeKit's `AnalyticsPipeline` (built in `App/FlagTrekAnalytics.swift`),
+which adds the common fields (`install_id`, `session_id`, `seq`, `ts`, `app_version`, `build`, `idiom`,
+`os_major`, `lang`, `platform`), keeps a copy in `Application Support/FlagTrek/events.jsonl`, and, while
+**Share anonymous usage data** is on (the default; it is in Settings), sends events to the studio's
+PostHog Cloud EU project. Debug builds also write them to the device log (`LoggingAnalyticsClient`).
+
+- The PostHog project key comes from the `POSTHOG_API_KEY` build setting in `project.yml` (empty in the
+  repo, so nothing is sent until it is set).
+- No analytics SDK is linked. Events are anonymous: random install id, no person profiles, no
+  IP-derived location, no IDFA (so no tracking prompt). Turning the switch off stops sending at once.
+- The pipeline emits `first_open`, `session_start` and `session_end` (`duration_s`, `levels_completed`);
+  a session ends after 30 minutes away.
 
 | Event | When | Properties |
 |---|---|---|
-| `session_start` | App becomes active | |
-| `session_end` | App goes to background | `duration_s` |
+| `first_open` | First ever launch (from the pipeline) | |
+| `session_start` | App becomes active after more than 30 minutes away, or first launch (from the pipeline) | |
+| `session_end` | Recorded when the next session starts (from the pipeline) | `duration_s`, `levels_completed` |
 | `level_started` | An attempt begins | run properties* |
 | `question_answered` | Each answer (wrong answers are `correct=false`) | run*, `index`, `answer`, `selected`, `correct`, `difficulty` (1 easy–3 hard), `streak`, `fuel`, `time_ms` |
 | `fuel_exhausted` | Fuel hits zero | run*, `index`, `can_refuel` |

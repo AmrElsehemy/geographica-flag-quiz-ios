@@ -60,7 +60,7 @@ One-click upload through the manual **TestFlight** workflow (signing through an 
 
 ## Analytics
 
-Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events currently go to the device log; plug in a backend by passing another `AnalyticsClient` to `AppModel`.
+Typed, tested events built on GameTimeKit's `AnalyticsClient`: sessions, levels, every answer, fuel exhaustion, the rewarded-refuel funnel and daily vs practice attempts. No personal data. Schema and event list: [`docs/ANALYTICS.md`](docs/ANALYTICS.md). Events go through GameTimeKit's `AnalyticsPipeline` and, while "Share anonymous usage data" is on (the default, in Settings), to the studio's PostHog project. Set `POSTHOG_API_KEY` in `project.yml` to turn sending on.
 
 ## Roadmap
 

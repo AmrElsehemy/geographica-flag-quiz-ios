@@ -140,6 +140,6 @@ import Testing
         FlagQuizAnalytics(client: client).hintSeen(.daily)
         #expect(client.events.first?.name == "hint_seen")
         #expect(client.events.first?.properties["hint"] == "daily")
-        #expect(client.events.first?.properties["game"] == "flag_quiz")
+        #expect(client.events.first?.properties["game"] == FlagQuizEvent.gameID)
     }
 }

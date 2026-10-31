@@ -1,5 +1,6 @@
 import FlagQuizCore
 import Foundation
+import GameTimeAnalytics
 import GameTimeExperience
 import GameTimeServices
 import Observation
@@ -11,6 +12,8 @@ final class AppModel {
     private(set) var onboarding: OnboardingProgress
     private(set) var soundEnabled: Bool
     private(set) var hapticsEnabled: Bool
+    /// Whether anonymous usage data is sent. On by default; the player can turn it off in Settings.
+    private(set) var analyticsSharing: Bool
 
     @ObservationIgnored private let store: any ProgressStoring
     @ObservationIgnored private let onboardingStore: any OnboardingStoring
@@ -18,7 +21,8 @@ final class AppModel {
     @ObservationIgnored private let feedback: GameFeedbackController
     @ObservationIgnored let ads = AdService()
     @ObservationIgnored let analytics: FlagQuizAnalytics
-    @ObservationIgnored private var appSession: SessionAnalytics
+    /// Nil in demo mode, which records nothing.
+    @ObservationIgnored private let analyticsPipeline: AnalyticsPipeline?
     @ObservationIgnored private let adsEnabled: Bool
     @ObservationIgnored private let gameCenterEnabled: Bool
     @ObservationIgnored let gameCenter = GameCenterService()
@@ -36,7 +40,7 @@ final class AppModel {
     init(store: any ProgressStoring = UserDefaultsProgressStore(),
          onboardingStore: any OnboardingStoring = UserDefaultsOnboardingStore(),
          defaults: UserDefaults = .standard,
-         analyticsClient: any AnalyticsClient = LoggingAnalyticsClient(),
+         analyticsPipeline: AnalyticsPipeline? = FlagTrekAnalytics.makePipeline(),
          adsEnabled: Bool = true,
          gameCenterEnabled: Bool = true,
          scoreSubmitter: any ScoreSubmitting = GameKitScoreSubmitter(),
@@ -44,9 +48,9 @@ final class AppModel {
         self.adsEnabled = adsEnabled
         self.gameCenterEnabled = gameCenterEnabled
         self.leaderboard = LeaderboardSubmitter(submitter: scoreSubmitter, store: scoreQueueStore)
-        let analytics = FlagQuizAnalytics(client: analyticsClient)
-        self.analytics = analytics
-        self.appSession = analytics.makeSession()
+        self.analyticsPipeline = analyticsPipeline
+        self.analytics = FlagQuizAnalytics(client: analyticsPipeline ?? NoOpAnalyticsClient())
+        self.analyticsSharing = analyticsPipeline?.isSharingEnabled ?? false
         self.store = store
         self.onboardingStore = onboardingStore
         self.onboarding = onboardingStore.load()
@@ -67,15 +71,20 @@ final class AppModel {
         defaults.set(enabled, forKey: Keys.haptics)
     }
 
+    func setAnalyticsSharing(_ enabled: Bool) {
+        analyticsPipeline?.setSharingEnabled(enabled)
+        analyticsSharing = enabled
+    }
+
     func play(_ event: GameFeedbackEvent) {
         feedback.play(event, soundEnabled: soundEnabled, hapticsEnabled: hapticsEnabled)
     }
 
     func appBecameActive() {
-        appSession.becameActive()
+        analyticsPipeline?.appDidBecomeActive()
         if gameCenter.isAuthenticated { flushLeaderboard() }
     }
-    func appWentToBackground() { appSession.wentToBackground() }
+    func appWentToBackground() { analyticsPipeline?.appDidEnterBackground() }
 
     func completeTutorial() {
         onboarding.completeTutorial()

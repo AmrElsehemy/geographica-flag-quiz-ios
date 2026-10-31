@@ -84,6 +84,9 @@ struct WorldMapView: View {
                         Button("How to play") { run = Run(kind: .tutorial(replay: true)) }
                         Toggle("Sound", isOn: Binding(get: { model.soundEnabled }, set: { model.setSoundEnabled($0) }))
                         Toggle("Haptics", isOn: Binding(get: { model.hapticsEnabled }, set: { model.setHapticsEnabled($0) }))
+                        // Anonymous gameplay facts (stops played, finished, failed), never linked to the player.
+                        Toggle("Share anonymous usage data",
+                               isOn: Binding(get: { model.analyticsSharing }, set: { model.setAnalyticsSharing($0) }))
                         if model.ads.privacyOptionsRequired {
                             Button("Privacy options") { Task { @MainActor in await model.ads.presentPrivacyOptions() } }
                         }

@@ -62,7 +62,7 @@ extension DemoMode {
             store: progressStore,
             onboardingStore: onboardingStore,
             defaults: UserDefaults(suiteName: "ai.knowlly.flagquiz.demo") ?? .standard,
-            analyticsClient: NoOpAnalyticsClient(),
+            analyticsPipeline: nil,
             adsEnabled: false,
             gameCenterEnabled: false,
             scoreSubmitter: DemoScoreSubmitter(),
