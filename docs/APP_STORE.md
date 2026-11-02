@@ -139,9 +139,10 @@ If ads, a Game Center leaderboard or any purchase ships, add them here.
 
 - **Privacy policy URL and support URL:** both required. Not created yet. The Knowlly Games web repo
   (`gametime-web`) is the natural home.
-- **Privacy "nutrition label":** 1.0 has no ad or analytics SDKs and analytics events are device-log
-  only, so "Data Not Collected" should apply (**verify**, including Game Center). Update the label when
-  ads or a real analytics backend are added.
+- **Privacy "nutrition label":** 1.0 has no ad or analytics SDKs, but anonymous gameplay events are
+  sent to PostHog while "Share anonymous usage data" is on (the default). Declare **Usage Data →
+  Product Interaction**, used for **Analytics**, **not linked** to the user, **not used for tracking**
+  (matches `PrivacyInfo.xcprivacy`; **verify**, including Game Center). Update again when ads are added.
 - **Consent / tracking:** nothing to do for 1.0 (no ads, no tracking). Revisit when ads return.
 - **Age rating:** answer the questionnaire; expect a low rating. Do **not** tick "Made for Kids":
   that changes the allowed ads and analytics.

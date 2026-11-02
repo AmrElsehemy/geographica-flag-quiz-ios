@@ -1,5 +1,5 @@
 {
-  "originHash" : "66fd86c03b300b2902b0a7c0648df8c766d0308808c8d600e513a2b8d30b1271",
+  "originHash" : "c02873ccc9bd04eacd7d2f3a07d3b6872a58b0ee8c64eafed60878a3b69b8678",
   "pins" : [
     {
       "identity" : "gametime-ios",
@@ -7,7 +7,7 @@
       "location" : "https://github.com/AmrElsehemy/gametime-ios.git",
       "state" : {
         "branch" : "master",
-        "revision" : "3b51d6b56c019b6075c311d1ad0a60f8c5d018bf"
+        "revision" : "f2e67aff831f38f413067cff925fed17df57ca4e"
       }
     },
     {

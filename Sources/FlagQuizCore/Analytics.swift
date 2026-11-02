@@ -48,10 +48,10 @@ public struct RunContext: Equatable, Sendable {
 /// `schemaVersion` on any breaking change to a name or property so downstream queries stay valid.
 public enum FlagQuizEvent {
     public static let schemaVersion = "1"
-    public static let gameID = "flag_quiz"
+    /// The game's slug in the studio's shared PostHog project.
+    public static let gameID = "flag-trek"
 
-    public static let sessionStart = "session_start"
-    public static let sessionEnd = "session_end"
+    // `first_open`, `session_start` and `session_end` come from GameTimeKit's `AnalyticsPipeline`.
     public static let levelStarted = "level_started"
     public static let questionAnswered = "question_answered"
     public static let fuelExhausted = "fuel_exhausted"
@@ -112,31 +112,6 @@ public struct FlagQuizAnalytics: Sendable {
     /// A one-time hint was shown and dismissed or acted on.
     public func hintSeen(_ hint: Hint) {
         send(FlagQuizEvent.hintSeen, ["hint": hint.rawValue])
-    }
-
-    public func makeSession() -> SessionAnalytics {
-        SessionAnalytics(analytics: self)
-    }
-}
-
-/// Tracks one app session: `session_start` when the app becomes active, `session_end` (with duration)
-/// when it goes to the background. Both calls are idempotent.
-public struct SessionAnalytics: Sendable {
-    private let analytics: FlagQuizAnalytics
-    private var startedAt: Date?
-
-    init(analytics: FlagQuizAnalytics) { self.analytics = analytics }
-
-    public mutating func becameActive() {
-        guard startedAt == nil else { return }
-        startedAt = analytics.now
-        analytics.send(FlagQuizEvent.sessionStart)
-    }
-
-    public mutating func wentToBackground() {
-        guard let startedAt else { return }
-        self.startedAt = nil
-        analytics.send(FlagQuizEvent.sessionEnd, ["duration_s": seconds(analytics.now.timeIntervalSince(startedAt))])
     }
 }
 

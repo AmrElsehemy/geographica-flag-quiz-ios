@@ -43,26 +43,12 @@ private func context(_ session: QuizSession, mode: RunMode = .adventure) -> RunC
 }
 
 @Suite struct AnalyticsTests {
-    @Test func sessionStartAndEndAreIdempotentAndTimed() {
-        let h = Harness()
-        var tracker = h.analytics.makeSession()
-        tracker.becameActive()
-        tracker.becameActive()
-        h.clock.advance(95)
-        tracker.wentToBackground()
-        tracker.wentToBackground()
-        #expect(h.names == ["session_start", "session_end"])
-        #expect(h.event("session_end")?.properties["duration_s"] == "95")
-    }
-
     @Test func everyEventCarriesGameAndSchema() {
         let h = Harness()
-        var tracker = h.analytics.makeSession()
-        tracker.becameActive()
         var run = h.analytics.makeRun(context(session()))
         run.start()
         for event in h.events {
-            #expect(event.properties["game"] == "flag_quiz")
+            #expect(event.properties["game"] == FlagQuizEvent.gameID)
             #expect(event.properties["schema"] == FlagQuizEvent.schemaVersion)
         }
     }
