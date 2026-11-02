@@ -113,15 +113,3 @@ extension Adventure {
         return QuizSession(id: stop.id, questions: questions)
     }
 }
-
-enum StableHash {
-    /// 64-bit FNV-1a. `Hashable.hashValue` is randomised per launch, so it can't seed anything reproducible.
-    static func fnv1a(_ string: String) -> UInt64 {
-        var hash: UInt64 = 0xcbf29ce484222325
-        for byte in string.utf8 {
-            hash ^= UInt64(byte)
-            hash = hash &* 0x100000001b3
-        }
-        return hash
-    }
-}

@@ -131,8 +131,9 @@ struct WorldMapView: View {
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer()
-                if model.progress.dailyStreak > 0 {
-                    Label("\(model.progress.dailyStreak)", systemImage: "flame.fill").foregroundStyle(.orange)
+                let streak = model.progress.displayedDailyStreak(on: Date())
+                if streak > 0 {
+                    Label("\(streak)", systemImage: "flame.fill").foregroundStyle(.orange)
                 }
             }
             .padding(16)

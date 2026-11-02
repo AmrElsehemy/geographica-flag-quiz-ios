@@ -10,18 +10,21 @@ import GeographicaFlags
 public enum DailyChallenge {
     public static let questionCount = 10
 
-    /// The single calendar that defines a daily-challenge day: Gregorian, UTC.
+    /// What defines a daily-challenge day (GameTimeKit's shared daily calendar): UTC, never the device's day.
+    public static let dailyCalendar = DailyCalendar.utc
+
+    /// A Gregorian calendar in the same UTC zone, for building dates in tests and tools.
     public static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = .gmt
+        calendar.timeZone = dailyCalendar.timeZone
         return calendar
     }()
 
+    /// The UTC day containing `date`.
+    public static func day(for date: Date) -> DailyDay { dailyCalendar.day(for: date) }
+
     /// `yyyy-MM-dd` of the UTC day containing `date`.
-    public static func dayKey(for date: Date) -> String {
-        let parts = calendar.dateComponents([.year, .month, .day], from: date)
-        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
-    }
+    public static func dayKey(for date: Date) -> String { day(for: date).key }
 
     public static func session(for date: Date) -> QuizSession {
         let key = dayKey(for: date)

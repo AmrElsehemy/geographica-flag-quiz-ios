@@ -75,6 +75,52 @@ import Testing
         #expect(p.dailyScore(on: utc(2026, 10, 11)) == nil)
     }
 
+    @Test func displayedStreakDropsToZeroOnceADayIsMissed() {
+        var p = AdventureProgress()
+        _ = record(&p, 500, utc(2026, 10, 10))
+        _ = record(&p, 600, utc(2026, 10, 11))
+        #expect(p.displayedDailyStreak(on: utc(2026, 10, 11, 23)) == 2, "Played today")
+        #expect(p.displayedDailyStreak(on: utc(2026, 10, 12, 8)) == 2, "Today's daily is still open")
+        #expect(p.displayedDailyStreak(on: utc(2026, 10, 13)) == 0, "Yesterday was missed")
+        #expect(p.dailyStreak == 2, "The saved count is untouched until the next daily")
+        #expect(AdventureProgress().displayedDailyStreak(on: utc(2026, 10, 13)) == 0)
+    }
+
+    @Test func aDailyOnAnEarlierDayThanTheLastOneDoesNotCount() {
+        var p = AdventureProgress()
+        _ = record(&p, 500, utc(2026, 10, 10))
+        let clockSetBack = record(&p, 900, utc(2026, 10, 8))
+        #expect(!clockSetBack)
+        #expect(p.lastDailyKey == "2026-10-10" && p.bestDailyScore == 500 && p.dailyStreak == 1)
+    }
+
+    @Test func savedProgressFromBeforeTheSharedStreakStillLoads() throws {
+        // A save written by the previous build: the format is unchanged.
+        let saved = Data(#"{"starsByStop":{},"lastDailyKey":"2026-10-11","dailyStreak":4,"bestDailyScore":820,"lastDailyScore":610}"#.utf8)
+        var p = try JSONDecoder().decode(AdventureProgress.self, from: saved)
+        #expect(p.dailyStreak == 4 && p.displayedDailyStreak(on: utc(2026, 10, 12)) == 4)
+        _ = record(&p, 700, utc(2026, 10, 12))
+        #expect(p.dailyStreak == 5, "The streak carries on from the old save")
+        let reencoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(p)) as? [String: Any]
+        #expect(reencoded?["lastDailyKey"] as? String == "2026-10-12")
+        #expect(reencoded?["dailyStreak"] as? Int == 5)
+    }
+
+    /// Recorded from the build before the daily code moved to GameTimeKit: the same day must still
+    /// give every player the same flags.
+    @Test func dailyFlagsAreUnchangedByTheSharedDailyCode() {
+        let expected = [
+            "2026-10-10": "NE,LU,UY,TH,EG,ID,PG,ML,BJ,BY",
+            "2026-12-31": "SL,LV,PH,TT,CY,AL,AU,SE,CN,SD",
+            "2027-03-01": "LV,UG,GY,MU,CU,NZ,HU,MG,TG,BB",
+        ]
+        for (key, answers) in expected {
+            let parts = key.split(separator: "-").compactMap { Int($0) }
+            let flags = DailyChallenge.session(for: utc(parts[0], parts[1], parts[2])).questions.map(\.answer)
+            #expect(flags.joined(separator: ",") == answers, "\(key)")
+        }
+    }
+
     @Test func dailyDayIsTheUTCDayNotTheDevicesLocalDay() {
         // 23:30 UTC on the 10th is already the 11th in Tokyo and still the 10th in New York.
         let instant = utc(2026, 10, 10, 23, 30)
