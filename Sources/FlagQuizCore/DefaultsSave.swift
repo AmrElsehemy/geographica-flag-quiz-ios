@@ -2,7 +2,7 @@ import Foundation
 import GameTimePersistence
 
 /// What the UserDefaults stores share: GameTimeKit's `SaveStore` under each store's existing key and
-/// JSON format, so a save that cannot be read is backed up instead of being replaced by fresh progress
+/// JSON format, so a save that cannot be read is backed up instead of being replaced by a fresh value
 /// on the next save.
 final class DefaultsSave<Value: Codable>: @unchecked Sendable {
     private let store: SaveStore<Value>

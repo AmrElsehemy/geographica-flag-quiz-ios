@@ -54,7 +54,7 @@ public final class InMemoryOnboardingStore: OnboardingStoring, @unchecked Sendab
 }
 
 /// Saved under the same key and JSON format as before. A save that cannot be read is backed up (see
-/// `lastRecovery`) rather than replaced by fresh progress on the next save.
+/// `lastRecovery`) rather than replaced by fresh onboarding state on the next save.
 public final class UserDefaultsOnboardingStore: OnboardingStoring, @unchecked Sendable, RecoveryReporting {
     private let storage: DefaultsSave<OnboardingProgress>
 

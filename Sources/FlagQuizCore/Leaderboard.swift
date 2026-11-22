@@ -74,7 +74,7 @@ public final class InMemoryScoreQueueStore: ScoreQueueStoring, @unchecked Sendab
 }
 
 /// Saved under the same key and JSON format as before. A save that cannot be read is backed up (see
-/// `lastRecovery`) rather than replaced by fresh progress on the next save.
+/// `lastRecovery`) rather than replaced by an empty queue on the next save.
 public final class UserDefaultsScoreQueueStore: ScoreQueueStoring, @unchecked Sendable, RecoveryReporting {
     private let storage: DefaultsSave<ScoreQueue>
 

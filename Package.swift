@@ -36,6 +36,7 @@ let package = Package(
                 .product(name: "GameTimeCore", package: "gametime-ios"),
                 .product(name: "GameTimeCommerce", package: "gametime-ios"),
                 .product(name: "GameTimeServices", package: "gametime-ios"),
+                .product(name: "GameTimePersistence", package: "gametime-ios"),
                 .product(name: "GameTimeTesting", package: "gametime-ios")
             ]
         )
