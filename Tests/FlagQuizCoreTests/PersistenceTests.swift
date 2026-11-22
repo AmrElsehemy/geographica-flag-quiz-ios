@@ -40,6 +40,9 @@ import Testing
         #expect(backups.backups() == [recovery])
         #expect(backups.backupData(for: recovery) == corrupted)
         #expect(UserDefaultsProgressStore(defaults: d).load().bestDailyScore == 500)
+
+        _ = store.load()
+        #expect(store.lastRecovery == nil, "A later successful load clears the recovery")
     }
 
     @Test func onboardingAndScoreQueueKeepTheirKeysAndRecoverToo() {

@@ -15,7 +15,8 @@ final class DefaultsSave<Value: Codable>: @unchecked Sendable {
 
     func load() -> Value {
         let result = store.load()
-        if case let .recovered(_, recovery) = result { lock.withLock { self.recovery = recovery } }
+        let recovery: SaveRecovery? = if case let .recovered(_, recovery) = result { recovery } else { nil }
+        lock.withLock { self.recovery = recovery }
         return result.value
     }
 
@@ -23,7 +24,7 @@ final class DefaultsSave<Value: Codable>: @unchecked Sendable {
         store.save(value)
     }
 
-    /// Set when the last load found a save it could not read (and backed it up).
+    /// Set when the most recent load found a save it could not read (and backed it up); nil otherwise.
     var lastRecovery: SaveRecovery? { lock.withLock { recovery } }
 }
 
