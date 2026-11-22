@@ -70,6 +70,7 @@ public enum FlagQuizEvent {
     public static let tutorialCompleted = "tutorial_completed"
     public static let tutorialSkipped = "tutorial_skipped"
     public static let hintSeen = "hint_seen"
+    public static let saveRecovered = "save_recovered"
 }
 
 /// Builds and sends events. Holds no player identity: events carry only gameplay facts and an
@@ -107,6 +108,11 @@ public struct FlagQuizAnalytics: Sendable {
         case .queued: send(FlagQuizEvent.leaderboardSubmit, ["status": "queued"])
         case .nothingToSubmit: break
         }
+    }
+
+    /// A saved store could not be read and was backed up instead of being overwritten.
+    public func saveRecovered(store: String) {
+        send(FlagQuizEvent.saveRecovered, ["store": store])
     }
 
     /// A one-time hint was shown and dismissed or acted on.

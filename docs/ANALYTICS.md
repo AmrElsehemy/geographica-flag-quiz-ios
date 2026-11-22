@@ -42,6 +42,7 @@ PostHog Cloud EU project. Debug builds also write them to the device log (`Loggi
 | `tutorial_skipped` | Player taps Skip | `replay`, `step` (questions answered so far) |
 | `hint_seen` | A one-time hint is dismissed or acted on | `hint` (`mapStart`, `stars`, `daily`) |
 | `leaderboard_submit` | A counting daily score was sent to Game Center or saved to retry | `status` (`submitted`, `queued`) |
+| `save_recovered` | At launch, a saved store could not be read and was backed up instead of being overwritten | `store` (`progress`, `onboarding`) |
 | `daily_completed` | First (counting) daily attempt recorded | `score`, `streak` |
 
 \* run properties: `mode` (`adventure`, `daily`, `daily_practice`), `level_id`, `attempt_id`, `questions`, and for

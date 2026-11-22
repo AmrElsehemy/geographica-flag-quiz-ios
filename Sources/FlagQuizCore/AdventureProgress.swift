@@ -1,4 +1,5 @@
 import Foundation
+import GameTimePersistence
 import GameTimeCore
 import GeographicaCore
 
@@ -96,23 +97,16 @@ public final class InMemoryProgressStore: ProgressStoring, @unchecked Sendable {
     public func save(_ progress: AdventureProgress) { lock.withLock { self.progress = progress } }
 }
 
-public final class UserDefaultsProgressStore: ProgressStoring, @unchecked Sendable {
-    private let defaults: UserDefaults
-    private let key: String
+/// Saved under the same key and JSON format as before. A save that cannot be read is backed up (see
+/// `lastRecovery`) rather than replaced by fresh progress on the next save.
+public final class UserDefaultsProgressStore: ProgressStoring, @unchecked Sendable, RecoveryReporting {
+    private let storage: DefaultsSave<AdventureProgress>
 
     public init(defaults: UserDefaults = .standard, key: String = "flagquiz.progress.v1") {
-        self.defaults = defaults
-        self.key = key
+        storage = DefaultsSave(defaults: defaults, key: key) { AdventureProgress() }
     }
 
-    public func load() -> AdventureProgress {
-        guard let data = defaults.data(forKey: key),
-              let progress = try? JSONDecoder().decode(AdventureProgress.self, from: data)
-        else { return AdventureProgress() }
-        return progress
-    }
-
-    public func save(_ progress: AdventureProgress) {
-        if let data = try? JSONEncoder().encode(progress) { defaults.set(data, forKey: key) }
-    }
+    public func load() -> AdventureProgress { storage.load() }
+    public func save(_ value: AdventureProgress) { storage.save(value) }
+    public var lastRecovery: SaveRecovery? { storage.lastRecovery }
 }

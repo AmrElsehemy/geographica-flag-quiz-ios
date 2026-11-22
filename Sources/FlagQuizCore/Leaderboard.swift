@@ -1,4 +1,5 @@
 import Foundation
+import GameTimePersistence
 
 /// The Game Center leaderboard for the Daily Challenge.
 public enum Leaderboard {
@@ -72,25 +73,18 @@ public final class InMemoryScoreQueueStore: ScoreQueueStoring, @unchecked Sendab
     public func save(_ queue: ScoreQueue) { lock.withLock { self.queue = queue } }
 }
 
-public final class UserDefaultsScoreQueueStore: ScoreQueueStoring, @unchecked Sendable {
-    private let defaults: UserDefaults
-    private let key: String
+/// Saved under the same key and JSON format as before. A save that cannot be read is backed up (see
+/// `lastRecovery`) rather than replaced by an empty queue on the next save.
+public final class UserDefaultsScoreQueueStore: ScoreQueueStoring, @unchecked Sendable, RecoveryReporting {
+    private let storage: DefaultsSave<ScoreQueue>
 
     public init(defaults: UserDefaults = .standard, key: String = "flagquiz.scorequeue.v1") {
-        self.defaults = defaults
-        self.key = key
+        storage = DefaultsSave(defaults: defaults, key: key) { ScoreQueue() }
     }
 
-    public func load() -> ScoreQueue {
-        guard let data = defaults.data(forKey: key),
-              let queue = try? JSONDecoder().decode(ScoreQueue.self, from: data)
-        else { return ScoreQueue() }
-        return queue
-    }
-
-    public func save(_ queue: ScoreQueue) {
-        if let data = try? JSONEncoder().encode(queue) { defaults.set(data, forKey: key) }
-    }
+    public func load() -> ScoreQueue { storage.load() }
+    public func save(_ value: ScoreQueue) { storage.save(value) }
+    public var lastRecovery: SaveRecovery? { storage.lastRecovery }
 }
 
 public enum SubmitOutcome: Equatable, Sendable {
