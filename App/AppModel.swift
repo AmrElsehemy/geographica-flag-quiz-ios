@@ -2,6 +2,7 @@ import FlagQuizCore
 import Foundation
 import GameTimeAnalytics
 import GameTimeExperience
+import GameTimePersistence
 import GameTimeServices
 import Observation
 
@@ -17,7 +18,8 @@ final class AppModel {
 
     @ObservationIgnored private let store: any ProgressStoring
     @ObservationIgnored private let onboardingStore: any OnboardingStoring
-    @ObservationIgnored private let defaults: UserDefaults
+    /// Sound and haptics, under the keys earlier builds used, so players' choices carry over.
+    @ObservationIgnored private let settings: FeedbackSettingsStore
     @ObservationIgnored private let feedback: GameFeedbackController
     @ObservationIgnored let ads = AdService()
     @ObservationIgnored let analytics: FlagQuizAnalytics
@@ -31,11 +33,6 @@ final class AppModel {
     private(set) var dailyLeaderboardStatus: SubmitOutcome?
     /// A run to present at launch (debug demo mode only, used for screenshots).
     private(set) var demoRun: Run?
-
-    private enum Keys {
-        static let sound = "flagquiz.sound"
-        static let haptics = "flagquiz.haptics"
-    }
 
     init(store: any ProgressStoring = UserDefaultsProgressStore(),
          onboardingStore: any OnboardingStoring = UserDefaultsOnboardingStore(),
@@ -54,21 +51,25 @@ final class AppModel {
         self.store = store
         self.onboardingStore = onboardingStore
         self.onboarding = onboardingStore.load()
-        self.defaults = defaults
         self.progress = store.load()
-        self.soundEnabled = defaults.object(forKey: Keys.sound) as? Bool ?? true
-        self.hapticsEnabled = defaults.object(forKey: Keys.haptics) as? Bool ?? true
+        let settings = FeedbackSettingsStore(soundKey: "flagquiz.sound", hapticsKey: "flagquiz.haptics", defaults: defaults)
+        self.settings = settings
+        self.soundEnabled = settings.current.soundEnabled
+        self.hapticsEnabled = settings.current.hapticsEnabled
         self.feedback = FlagQuizFeedback.makeController()
+        // A save that could not be read was backed up rather than lost; count how often that happens.
+        if (store as? RecoveryReporting)?.lastRecovery != nil { analytics.saveRecovered(store: "progress") }
+        if (onboardingStore as? RecoveryReporting)?.lastRecovery != nil { analytics.saveRecovered(store: "onboarding") }
     }
 
     func setSoundEnabled(_ enabled: Bool) {
         soundEnabled = enabled
-        defaults.set(enabled, forKey: Keys.sound)
+        settings.setSoundEnabled(enabled)
     }
 
     func setHapticsEnabled(_ enabled: Bool) {
         hapticsEnabled = enabled
-        defaults.set(enabled, forKey: Keys.haptics)
+        settings.setHapticsEnabled(enabled)
     }
 
     func setAnalyticsSharing(_ enabled: Bool) {

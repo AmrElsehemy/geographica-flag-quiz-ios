@@ -1,4 +1,5 @@
 import Foundation
+import GameTimePersistence
 
 /// One-time hints shown in context, never as a wall of instructions.
 public enum Hint: String, Codable, CaseIterable, Sendable {
@@ -52,23 +53,16 @@ public final class InMemoryOnboardingStore: OnboardingStoring, @unchecked Sendab
     public func save(_ progress: OnboardingProgress) { lock.withLock { self.progress = progress } }
 }
 
-public final class UserDefaultsOnboardingStore: OnboardingStoring, @unchecked Sendable {
-    private let defaults: UserDefaults
-    private let key: String
+/// Saved under the same key and JSON format as before. A save that cannot be read is backed up (see
+/// `lastRecovery`) rather than replaced by fresh progress on the next save.
+public final class UserDefaultsOnboardingStore: OnboardingStoring, @unchecked Sendable, RecoveryReporting {
+    private let storage: DefaultsSave<OnboardingProgress>
 
     public init(defaults: UserDefaults = .standard, key: String = "flagquiz.onboarding.v1") {
-        self.defaults = defaults
-        self.key = key
+        storage = DefaultsSave(defaults: defaults, key: key) { OnboardingProgress() }
     }
 
-    public func load() -> OnboardingProgress {
-        guard let data = defaults.data(forKey: key),
-              let progress = try? JSONDecoder().decode(OnboardingProgress.self, from: data)
-        else { return OnboardingProgress() }
-        return progress
-    }
-
-    public func save(_ progress: OnboardingProgress) {
-        if let data = try? JSONEncoder().encode(progress) { defaults.set(data, forKey: key) }
-    }
+    public func load() -> OnboardingProgress { storage.load() }
+    public func save(_ value: OnboardingProgress) { storage.save(value) }
+    public var lastRecovery: SaveRecovery? { storage.lastRecovery }
 }

@@ -27,6 +27,8 @@ targets:
         product: GameTimeCommerce
       - package: GameTimeKit
         product: GameTimeAnalytics
+      - package: GameTimeKit
+        product: GameTimePersistence
       - package: GeographicaKit
         product: GeographicaCore
       - package: GeographicaKit
